@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Colours mirror --color-brand / --color-background / --color-foreground in globals.css -->
+  <g transform="translate(4 0)">
+    <path fill="#ff2442" d="M12 1.2c.4 0 .8.2 1 .6 1.9 3.1 4.3 6.2 6.2 9.4 1.9 3.1 3.1 5.8 3.1 8.6C22.3 26 17.7 30.8 12 30.8S1.7 26 1.7 19.8c0-2.8 1.2-5.5 3.1-8.6C6.7 8 9.1 4.9 11 1.8c.2-.4.6-.6 1-.6Z"/>
+    <path fill="#06121d" fill-opacity=".35" d="M12 13.5a7.5 7.5 0 0 1 7.3 9.3A7.5 7.5 0 0 1 4.6 21a7.4 7.4 0 0 1 7.4-7.5Z"/>
+    <path fill="#f8fafc" fill-opacity=".85" d="M7.2 20.4c.6 0 1 .4 1 1 0 1.6 1.2 3 2.8 3.3a1 1 0 1 1-.3 2 5.4 5.4 0 0 1-4.5-5.3c0-.6.4-1 1-1Z"/>
+  </g>
+</svg>

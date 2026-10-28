@@ -1,0 +1,26 @@
+# Keep the build context small and free of secrets.
+.git
+.github
+.claude
+.next
+node_modules
+coverage
+test-results
+playwright-report
+blob-report
+tests
+*.tsbuildinfo
+npm-debug.log*
+.DS_Store
+
+# Never bake secrets into the image; runtime config comes from env_file.
+.env
+.env.*
+!.env.example
+
+# Deployment/docs files aren't needed inside the image.
+Dockerfile
+.dockerignore
+docker-compose.yml
+deploy
+README.md

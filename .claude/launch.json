@@ -1,0 +1,14 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "bloodlink-e2e",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd /Users/pylot/Downloads/self/blood_donot && MONGODB_URI=mongodb://127.0.0.1:27018 MONGODB_DB=bloodlink_e2e AUTH_SECRET=e2e-secret-e2e-secret-e2e-secret-e2e-secret DATA_ENCRYPTION_KEY=MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY= ADMIN_EMAILS=admin@e2e.test PORT=3100 node .next/standalone/server.js"
+      ],
+      "port": 3100
+    }
+  ]
+}

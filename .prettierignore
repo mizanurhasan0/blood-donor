@@ -1,0 +1,17 @@
+# Dependencies and build output
+node_modules/
+.next/
+out/
+build/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Lockfiles and generated reports
+package-lock.json
+playwright-report/
+test-results/
+blob-report/
+
+# Static assets
+public/

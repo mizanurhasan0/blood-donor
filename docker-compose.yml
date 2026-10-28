@@ -1,0 +1,71 @@
+# BloodLink on a single VPS: the Next.js app plus a tiny cron container that
+# drives the notification worker. MongoDB is external (MongoDB Atlas).
+#
+#   cp .env.example .env   # fill in real values
+#   docker compose up -d --build
+#
+# Compose reads .env both for ${...} interpolation below and as the app's env_file.
+
+name: bloodlink
+
+services:
+  app:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:?Set NEXT_PUBLIC_SITE_URL in .env}
+    image: bloodlink:latest
+    env_file: .env
+    environment:
+      NODE_ENV: production
+    # Bound to localhost only: nginx on the host terminates TLS and proxies here.
+    ports:
+      - "127.0.0.1:3000:3000"
+    restart: unless-stopped
+    # Lets in-flight requests and after() callbacks finish on deploys.
+    stop_grace_period: 30s
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Every 60s: expire outdated requests and deliver a bounded batch of due
+  # notification jobs. Talks to the app over the private compose network, so the
+  # endpoint never needs to be reachable from the internet (nginx blocks it).
+  cron:
+    image: curlimages/curl:8.11.1
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      NOTIFICATION_CRON_SECRET: ${NOTIFICATION_CRON_SECRET:?Set NOTIFICATION_CRON_SECRET in .env}
+    entrypoint: ["/bin/sh", "-c"]
+    # The header is piped via stdin so the secret doesn't appear in the process list.
+    # ($$ escapes compose interpolation; the container's shell expands the variable.)
+    command:
+      - |
+        while true; do
+          printf 'Authorization: Bearer %s\n' "$$NOTIFICATION_CRON_SECRET" \
+            | curl --silent --show-error --fail --max-time 55 -X POST -H @- \
+                http://app:3000/api/internal/process-notifications \
+            || echo "[cron] notification run failed"
+          echo
+          sleep 60
+        done
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"

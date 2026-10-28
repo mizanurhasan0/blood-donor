@@ -1,0 +1,143 @@
+@import "tailwindcss";
+
+/*
+ * BloodLink design tokens — the single source of truth for the visual system.
+ * Every component uses the semantic utilities these generate (bg-surface,
+ * text-muted, rounded-card, shadow-glow, …). Change a value here and it
+ * updates everywhere.
+ */
+@theme {
+  --color-background: #06121d;
+  --color-surface: #0b1d2b;
+  --color-card: #102635;
+  --color-brand: #ff2442;
+  --color-brand-hover: #e71938;
+  --color-foreground: #f8fafc;
+  --color-muted: #a7b7c8;
+  --color-outline: #243b4c;
+  --color-success: #24c78e;
+
+  /* Additional semantic colours */
+  --color-brand-soft: #ffe4e8;
+  /* Accessible brand variants (WCAG AA): #ff2442 is 3.6:1 under white text and
+   * 4.1:1 on card surfaces, so filled controls and small text use these. */
+  --color-brand-strong: #d81b37;
+  --color-brand-strong-hover: #c21530;
+  --color-brand-bright: #ff5a6e;
+  --color-warning: #f5b841;
+  --color-info: #5ab0ff;
+  --color-elevated: #15303f;
+
+  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 1rem;
+  --radius-button: 0.75rem;
+  --radius-pill: 9999px;
+
+  --shadow-card: 0 1px 0 0 rgb(255 255 255 / 0.03) inset, 0 12px 32px -16px rgb(0 0 0 / 0.6);
+  --shadow-glow: 0 8px 28px -8px rgb(255 36 66 / 0.55);
+  --shadow-popover: 0 24px 48px -12px rgb(0 0 0 / 0.7);
+
+  --default-transition-duration: 200ms;
+  --default-transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+
+  --animate-fade-up: fade-up 600ms cubic-bezier(0.2, 0, 0, 1) both;
+  --animate-fade-in: fade-in 200ms ease-out both;
+  --animate-marker-pulse: marker-pulse 2.4s ease-out infinite;
+  --animate-glow: glow 6s ease-in-out infinite;
+  --animate-dash: dash 3s linear infinite;
+  --animate-slide-in: slide-in 250ms cubic-bezier(0.2, 0, 0, 1) both;
+
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes slide-in {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+  }
+  @keyframes marker-pulse {
+    0% {
+      transform: scale(0.6);
+      opacity: 0.7;
+    }
+    100% {
+      transform: scale(2.4);
+      opacity: 0;
+    }
+  }
+  @keyframes glow {
+    0%,
+    100% {
+      opacity: 0.55;
+    }
+    50% {
+      opacity: 0.85;
+    }
+  }
+  @keyframes dash {
+    to {
+      stroke-dashoffset: -24;
+    }
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand;
+  }
+
+  ::selection {
+    @apply bg-brand text-foreground;
+  }
+}
+
+/* Sticky header surface. Where supported, it starts transparent and gains a
+ * background + hairline as the page scrolls — pure CSS, no scroll listener. */
+@utility header-surface {
+  border-color: color-mix(in oklab, var(--color-outline) 70%, transparent);
+  background-color: color-mix(in oklab, var(--color-background) 92%, transparent);
+  @supports (animation-timeline: scroll()) {
+    border-color: transparent;
+    background-color: transparent;
+    animation: header-surface linear both;
+    animation-timeline: scroll();
+    animation-range: 0 80px;
+  }
+}
+
+@keyframes header-surface {
+  to {
+    border-color: color-mix(in oklab, var(--color-outline) 70%, transparent);
+    background-color: color-mix(in oklab, var(--color-background) 92%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
