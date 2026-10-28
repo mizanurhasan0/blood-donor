@@ -2,6 +2,7 @@
 
 import { Check, ChevronDown, X } from "lucide-react";
 import { useId, useMemo, useState, type KeyboardEvent } from "react";
+import { useT } from "@/lib/i18n/locale-context";
 import { cn } from "@/lib/utils/cn";
 import { controlClasses } from "./field";
 
@@ -29,12 +30,13 @@ export function Combobox({
   value,
   onChange,
   options,
-  placeholder = "Search…",
+  placeholder,
   invalid,
   describedBy,
   clearable = false,
   onBlur,
 }: ComboboxProps) {
+  const t = useT();
   const listId = useId();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -97,7 +99,7 @@ export function Combobox({
         aria-describedby={describedBy}
         autoComplete="off"
         className={cn(controlClasses, "pr-16")}
-        placeholder={selected ? selected.label : placeholder}
+        placeholder={selected ? selected.label : (placeholder ?? t.common.search)}
         value={open ? query : (selected?.label ?? "")}
         onChange={(e) => {
           setQuery(e.target.value);
@@ -122,7 +124,7 @@ export function Combobox({
             onClick={() => onChange("")}
           >
             <X className="size-4" aria-hidden="true" />
-            <span className="sr-only">Clear selection</span>
+            <span className="sr-only">{t.common.clearSelection}</span>
           </button>
         )}
         <ChevronDown className="size-4" aria-hidden="true" />
@@ -133,7 +135,7 @@ export function Combobox({
           role="listbox"
           className="absolute z-30 mt-1.5 max-h-64 w-full animate-slide-in overflow-auto rounded-button border border-outline bg-surface p-1 shadow-popover"
         >
-          {filtered.length === 0 && <li className="px-3 py-2.5 text-sm text-muted">No matches</li>}
+          {filtered.length === 0 && <li className="px-3 py-2.5 text-sm text-muted">{t.common.noMatches}</li>}
           {filtered.map((option, index) => (
             <li
               key={option.value}

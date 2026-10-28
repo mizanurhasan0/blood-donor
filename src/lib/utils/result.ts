@@ -1,4 +1,7 @@
-/** Uniform return shape for Server Actions consumed by client forms. */
+/**
+ * Uniform return shape for Server Actions consumed by client forms.
+ * `message` and `error` are feedback keys (lib/i18n/messages/feedback.ts); screens translate them.
+ */
 export type ActionResult<T = undefined> =
   | { ok: true; data: T; message?: string }
   | { ok: false; error: string; fieldErrors?: Record<string, string[]> };
@@ -11,7 +14,7 @@ export function fail(error: string, fieldErrors?: Record<string, string[]>): Act
   return { ok: false, error, fieldErrors };
 }
 
-/** Error thrown by services for expected, user-facing failures. */
+/** Error thrown by services for expected, user-facing failures. `message` is a feedback key. */
 export class AppError extends Error {
   constructor(
     message: string,

@@ -5,11 +5,12 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/states";
 import { getViewer } from "@/features/auth/viewer";
+import { getDictionary } from "@/lib/i18n/server";
 import { getCommentPage } from "../comment.service";
 import type { CommentViewer } from "../types";
 import { CommentList } from "./comment-list";
 
-function SectionShell({ children, busy }: { children: ReactNode; busy?: boolean }) {
+function SectionShell({ heading, children, busy }: { heading: string; children: ReactNode; busy?: boolean }) {
   return (
     <section
       id="comments"
@@ -19,7 +20,7 @@ function SectionShell({ children, busy }: { children: ReactNode; busy?: boolean 
     >
       <Card className="flex flex-col gap-5 p-4 sm:p-6">
         <h2 id="comments-heading" className="text-lg font-semibold sm:text-xl">
-          Comments
+          {heading}
         </h2>
         {children}
       </Card>
@@ -52,14 +53,12 @@ export async function CommentSection({
   requestId: string;
   commentsOpen: boolean;
 }) {
+  const t = await getDictionary();
   const thread = await loadThread(requestId);
   if (!thread) {
     return (
-      <SectionShell>
-        <ErrorState
-          title="Comments couldn't load"
-          description="Something went wrong on our side. Please refresh the page to try again."
-        />
+      <SectionShell heading={t.comments.heading}>
+        <ErrorState title={t.comments.section.errorTitle} description={t.comments.section.errorBody} />
       </SectionShell>
     );
   }
@@ -73,10 +72,10 @@ export async function CommentSection({
   );
 }
 
-export function CommentSectionSkeleton() {
+export function CommentSectionSkeleton({ heading, label }: { heading: string; label: string }) {
   return (
-    <SectionShell busy>
-      <span className="sr-only">Loading comments…</span>
+    <SectionShell heading={heading} busy>
+      <span className="sr-only">{label}</span>
       <Skeleton className="h-28 w-full" />
       {[0, 1, 2].map((i) => (
         <div key={i} className="flex gap-3">

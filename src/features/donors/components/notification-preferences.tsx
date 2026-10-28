@@ -1,12 +1,15 @@
 "use client";
 
 import { BellOff, CircleCheck } from "lucide-react";
-import Link from "next/link";
 import { useOptimistic, useState, useTransition } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { translate } from "@/lib/i18n/format";
+import { LocalizedLink } from "@/lib/i18n/localized-link";
+import { useT } from "@/lib/i18n/locale-context";
 import { cn } from "@/lib/utils/cn";
 import { unsubscribeAction, updatePreferencesAction } from "../actions";
+import { Rich } from "./rich-text";
 
 interface Preferences {
   available: boolean;
@@ -68,6 +71,8 @@ function Toggle({
 
 /** Availability and email-alert switches, saved optimistically and reverted if the save fails. */
 export function NotificationPreferences({ available, emailNotifications }: Preferences) {
+  const t = useT();
+  const copy = t.donor.preferences;
   const [prefs, applyOptimistic] = useOptimistic<Preferences, Partial<Preferences>>(
     { available, emailNotifications },
     (state, patch) => ({ ...state, ...patch }),
@@ -80,7 +85,9 @@ export function NotificationPreferences({ available, emailNotifications }: Prefe
     startTransition(async () => {
       applyOptimistic(patch);
       const result = await updatePreferencesAction(patch);
-      setFeedback(result.ok ? { ok: true, text: "Preferences saved" } : { ok: false, text: result.error });
+      setFeedback(
+        result.ok ? { ok: true, text: copy.saved } : { ok: false, text: translate(t.feedback, result.error) },
+      );
     });
   }
 
@@ -89,15 +96,15 @@ export function NotificationPreferences({ available, emailNotifications }: Prefe
       <div className="divide-y divide-outline/60">
         <Toggle
           id="pref-available"
-          label="Available to donate"
-          description="Turn off after donating or while you can't donate. Alerts pause while you're unavailable."
+          label={copy.availableLabel}
+          description={copy.availableHint}
           checked={prefs.available}
           onToggle={() => save({ available: !prefs.available })}
         />
         <Toggle
           id="pref-email"
-          label="Email alerts"
-          description="Emails about approved requests for your blood group in your district or division."
+          label={copy.emailLabel}
+          description={copy.emailHint}
           checked={prefs.emailNotifications}
           onToggle={() => save({ emailNotifications: !prefs.emailNotifications })}
         />
@@ -116,10 +123,10 @@ export function NotificationPreferences({ available, emailNotifications }: Prefe
         {prefs.emailNotifications ? (
           <Button variant="ghost" onClick={() => save({ emailNotifications: false })}>
             <BellOff className="size-4" aria-hidden="true" />
-            Stop all notifications
+            {copy.stopAll}
           </Button>
         ) : (
-          <p className="text-sm text-muted">You won&apos;t get any alert emails.</p>
+          <p className="text-sm text-muted">{copy.noEmails}</p>
         )}
       </div>
     </Card>
@@ -128,6 +135,8 @@ export function NotificationPreferences({ available, emailNotifications }: Prefe
 
 /** One-click unsubscribe from an email link; no sign-in needed (the signed token authorises it). */
 export function UnsubscribeConfirm({ userId, token }: { userId: string; token: string }) {
+  const t = useT();
+  const copy = t.donor.unsubscribe;
   const [isPending, startTransition] = useTransition();
   const [feedback, setFeedback] = useState<Feedback>(null);
 
@@ -137,8 +146,8 @@ export function UnsubscribeConfirm({ userId, token }: { userId: string; token: s
       const result = await unsubscribeAction(userId, token);
       setFeedback(
         result.ok
-          ? { ok: true, text: result.message ?? "You're unsubscribed." }
-          : { ok: false, text: result.error },
+          ? { ok: true, text: result.message ? translate(t.feedback, result.message) : copy.done }
+          : { ok: false, text: translate(t.feedback, result.error) },
       );
     });
   }
@@ -149,14 +158,19 @@ export function UnsubscribeConfirm({ userId, token }: { userId: string; token: s
         <CircleCheck className="size-8 text-success" aria-hidden="true" />
         <p className="font-medium">{feedback.text}</p>
         <p className="text-sm text-muted">
-          Changed your mind?{" "}
-          <Link
-            href="/account#notifications"
-            className="text-brand-bright underline-offset-4 hover:underline"
-          >
-            Turn alerts back on
-          </Link>{" "}
-          from your account.
+          <Rich
+            text={copy.changedMind}
+            values={{
+              link: (
+                <LocalizedLink
+                  href="/account#notifications"
+                  className="text-brand-bright underline-offset-4 hover:underline"
+                >
+                  {copy.turnBackOn}
+                </LocalizedLink>
+              ),
+            }}
+          />
         </p>
       </div>
     );
@@ -171,10 +185,10 @@ export function UnsubscribeConfirm({ userId, token }: { userId: string; token: s
       )}
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
         <Button onClick={confirm} pending={isPending}>
-          Yes, stop emails
+          {copy.confirmStop}
         </Button>
         <ButtonLink href="/" variant="ghost">
-          Keep receiving them
+          {copy.keepReceiving}
         </ButtonLink>
       </div>
     </div>

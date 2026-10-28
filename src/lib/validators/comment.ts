@@ -6,13 +6,10 @@ export const commentSchema = z.object({
   requestId: objectIdSchema,
   parentId: objectIdSchema.optional(),
   content: z
-    .string()
+    .string({ error: "This field is required" })
     .transform(cleanText)
     .pipe(
-      z
-        .string()
-        .min(2, "Write a little more")
-        .max(LIMITS.commentMaxLength, `Keep it under ${LIMITS.commentMaxLength} characters`),
+      z.string().min(2, "Write a little more").max(LIMITS.commentMaxLength, "Keep it under 1000 characters"),
     ),
 });
 

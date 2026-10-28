@@ -104,7 +104,7 @@ describe("POST /api/uploads/prescription", () => {
       "content-length": String(6 * 1024 * 1024),
     });
     expect(response.status).toBe(400);
-    expect(await response.json()).toEqual({ error: "The file is larger than 5 MB." });
+    expect(await response.json()).toEqual({ error: "documentTooLarge" });
   });
 });
 

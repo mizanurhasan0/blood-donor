@@ -87,25 +87,19 @@ describe("bloodRequestSchema", () => {
   it.each(["01212345678", "0171234567", "017123456789", "+447911123456", "+8811712345678", "", "call me"])(
     "rejects the phone number %j",
     (contactPhone) => {
-      expect(fieldErrors(validInput({ contactPhone })).contactPhone).toEqual([
-        "Enter a valid Bangladeshi mobile number (01XXXXXXXXX)",
-      ]);
+      expect(fieldErrors(validInput({ contactPhone })).contactPhone).toEqual(["bdPhoneInvalid"]);
     },
   );
 
   it("uses the Bangladesh calendar day, not UTC, for 'today'", () => {
     expect(bloodRequestSchema.safeParse(validInput({ neededDate: TODAY_BD })).success).toBe(true);
     // Still the 10th in UTC and in the server's timezone, but already past in Dhaka.
-    expect(fieldErrors(validInput({ neededDate: "2026-03-10" })).neededDate).toEqual([
-      "The date cannot be in the past",
-    ]);
+    expect(fieldErrors(validInput({ neededDate: "2026-03-10" })).neededDate).toEqual(["neededDatePast"]);
   });
 
   it("allows dates up to 60 days ahead and rejects anything later", () => {
     expect(bloodRequestSchema.safeParse(validInput({ neededDate: "2026-05-10" })).success).toBe(true);
-    expect(fieldErrors(validInput({ neededDate: "2026-05-11" })).neededDate).toEqual([
-      "Choose a date within the next 60 days",
-    ]);
+    expect(fieldErrors(validInput({ neededDate: "2026-05-11" })).neededDate).toEqual(["neededDateTooFar"]);
   });
 
   it.each(["11/03/2026", "2026-3-12", "2026-02-30", "tomorrow"])(
@@ -129,7 +123,7 @@ describe("bloodRequestSchema", () => {
     "prescriptions/not-an-object-id-at-all/AbCdEfGh_ijkl-MNOP1234.png",
     "https://evil.example/prescriptions/x.png",
   ])("rejects the document key %j", (documentKey) => {
-    expect(fieldErrors(validInput({ documentKey })).documentKey).toEqual(["Upload the document again"]);
+    expect(fieldErrors(validInput({ documentKey })).documentKey).toEqual(["documentKeyInvalid"]);
   });
 
   it("limits the description to 600 characters after trimming", () => {
@@ -139,7 +133,7 @@ describe("bloodRequestSchema", () => {
     );
     expect(bloodRequestSchema.safeParse(validInput({ description: "" })).success).toBe(true);
     expect(fieldErrors(validInput({ description: "a".repeat(601) })).description).toEqual([
-      "Keep it under 600 characters",
+      "descriptionTooLong",
     ]);
   });
 
@@ -153,15 +147,13 @@ describe("bloodRequestSchema", () => {
 
   it("rejects unknown blood groups, districts and urgencies", () => {
     const errors = fieldErrors(validInput({ bloodGroup: "C+", district: "Gotham", urgency: "asap" }));
-    expect(errors.bloodGroup).toEqual(["Select a blood group"]);
-    expect(errors.district).toEqual(["Select a district"]);
+    expect(errors.bloodGroup).toEqual(["bloodGroupRequired"]);
+    expect(errors.district).toEqual(["districtRequired"]);
     expect(errors.urgency).toBeDefined();
   });
 
   it("requires a meaningful hospital name", () => {
-    expect(fieldErrors(validInput({ hospitalName: "  x " })).hospitalName).toEqual([
-      "Enter the hospital or institute name",
-    ]);
+    expect(fieldErrors(validInput({ hospitalName: "  x " })).hospitalName).toEqual(["hospitalRequired"]);
   });
 });
 

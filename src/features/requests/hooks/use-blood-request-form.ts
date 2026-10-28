@@ -4,6 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useRef, useState, useTransition, type KeyboardEvent } from "react";
 import { useForm } from "react-hook-form";
 import { LIMITS } from "@/lib/constants/site";
+import { formatNumber, interpolate, translate } from "@/lib/i18n/format";
+import { useLocale, useT } from "@/lib/i18n/locale-context";
+import type { ClientDictionary } from "@/lib/i18n/messages";
 import { addDays, todayInBangladesh } from "@/lib/utils/dates";
 import {
   bloodRequestSchema,
@@ -15,6 +18,9 @@ import { createRequestAction } from "../actions";
 
 const UPLOAD_URL = "/api/uploads/prescription";
 const ALLOWED_EXTENSIONS = /\.(jpe?g|png|webp|pdf)$/i;
+export const MAX_DOCUMENT_MB = Math.round(LIMITS.documentMaxBytes / (1024 * 1024));
+
+type UploadErrors = ClientDictionary["requestForm"]["document"]["errors"];
 
 export type UploadState =
   | { status: "idle" }
@@ -30,22 +36,31 @@ interface UploadResponse {
 }
 
 /** Fast client-side feedback only; the server re-validates the real file contents. */
-function precheck(file: File): string | null {
-  if (file.size === 0) return "The file is empty.";
-  if (file.size > LIMITS.documentMaxBytes) return "The file is larger than 5 MB.";
+function precheck(file: File, errors: UploadErrors, tooLarge: string): string | null {
+  if (file.size === 0) return errors.empty;
+  if (file.size > LIMITS.documentMaxBytes) return tooLarge;
   const knownType = file.type ? file.type in ALLOWED_DOCUMENT_TYPES : ALLOWED_EXTENSIONS.test(file.name);
-  return knownType ? null : "Upload a JPG, PNG, WEBP or PDF file.";
+  return knownType ? null : errors.unsupported;
 }
 
-function failureMessage(xhr: XMLHttpRequest, body: UploadResponse | null): string {
-  if (body?.error) return body.error;
-  if (xhr.status === 401) return "Your session has expired. Sign in again to upload.";
-  if (xhr.status === 413) return "The file is larger than 5 MB.";
-  return "The upload failed. Please try again.";
+/** The server sends a message key in `error`; the status code is the fallback. */
+function failureMessage(
+  xhr: XMLHttpRequest,
+  body: UploadResponse | null,
+  t: ClientDictionary,
+  tooLarge: string,
+): string {
+  if (body?.error) return translate(t.feedback, body.error);
+  if (xhr.status === 401) return t.requestForm.document.errors.sessionExpired;
+  if (xhr.status === 413) return tooLarge;
+  return t.requestForm.document.errors.failed;
 }
 
 /** XHR (not fetch) so the browser reports real upload progress. */
 export function usePrescriptionUpload(onKeyChange: (key: string | undefined) => void) {
+  const { lang, t } = useLocale();
+  const errors = t.requestForm.document.errors;
+  const tooLarge = interpolate(errors.tooLarge, { max: formatNumber(MAX_DOCUMENT_MB, lang) });
   const [state, setState] = useState<UploadState>({ status: "idle" });
   const xhrRef = useRef<XMLHttpRequest | null>(null);
 
@@ -66,7 +81,7 @@ export function usePrescriptionUpload(onKeyChange: (key: string | undefined) => 
     (file: File) => {
       abort();
       onKeyChange(undefined);
-      const problem = precheck(file);
+      const problem = precheck(file, errors, tooLarge);
       if (problem) {
         setState({ status: "error", message: problem });
         return;
@@ -88,12 +103,12 @@ export function usePrescriptionUpload(onKeyChange: (key: string | undefined) => 
           setState({ status: "done", name: body.name ?? file.name, size: body.size ?? file.size });
           onKeyChange(body.key);
         } else {
-          setState({ status: "error", message: failureMessage(xhr, body) });
+          setState({ status: "error", message: failureMessage(xhr, body, t, tooLarge) });
         }
       });
       xhr.addEventListener("error", () => {
         xhrRef.current = null;
-        setState({ status: "error", message: "Network error. Check your connection and try again." });
+        setState({ status: "error", message: errors.network });
       });
 
       xhr.open("POST", UPLOAD_URL);
@@ -102,7 +117,7 @@ export function usePrescriptionUpload(onKeyChange: (key: string | undefined) => 
       data.append("file", file);
       xhr.send(data);
     },
-    [abort, onKeyChange],
+    [abort, errors, onKeyChange, t, tooLarge],
   );
 
   return { state, upload, remove, isUploading: state.status === "uploading" };
@@ -144,6 +159,7 @@ function isFieldName(name: string): name is keyof BloodRequestInput {
 
 /** Form state, document upload and submission for the "Post a blood request" page. */
 export function useBloodRequestForm() {
+  const t = useT();
   const form = useForm<BloodRequestInput, unknown, BloodRequestValues>({
     resolver: zodResolver(bloodRequestSchema),
     defaultValues: DEFAULT_VALUES,
@@ -175,7 +191,11 @@ export function useBloodRequestForm() {
     let focused = false;
     for (const [name, messages] of Object.entries(fieldErrors ?? {})) {
       if (!isFieldName(name) || !messages?.[0]) continue;
-      setError(name, { type: "server", message: messages[0] }, { shouldFocus: !focused });
+      setError(
+        name,
+        { type: "server", message: translate(t.feedback, messages[0]) },
+        { shouldFocus: !focused },
+      );
       focused = true;
     }
   };
@@ -190,10 +210,10 @@ export function useBloodRequestForm() {
           setSubmitted(true);
           return;
         }
-        setServerError(result.error);
+        setServerError(translate(t.feedback, result.error));
         applyFieldErrors(result.fieldErrors);
       } catch {
-        setServerError("We couldn't reach the server. Check your connection and try again.");
+        setServerError(t.requestForm.networkError);
       }
     });
   });

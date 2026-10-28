@@ -1,7 +1,8 @@
 import { CalendarDays, ChevronRight, Clock, MapPin, MessageSquare } from "lucide-react";
-import Link from "next/link";
+import { formatDate, formatNumber, formatRelative, interpolate } from "@/lib/i18n/format";
+import { LocalizedLink } from "@/lib/i18n/localized-link";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils/cn";
-import { formatDate, formatRelative } from "@/lib/utils/dates";
 import type { RequestSummary } from "../types";
 import { BloodGroupBadge, RequestStatusBadge, UrgencyBadge } from "./badges";
 
@@ -9,14 +10,19 @@ import { BloodGroupBadge, RequestStatusBadge, UrgencyBadge } from "./badges";
  * Request summary card. Uses the current time for relative dates, so render
  * it only in request-time (dynamic) components, never in a cached scope.
  */
-export function BloodRequestCard({
+export async function BloodRequestCard({
   request,
   headingLevel = "h3",
 }: {
   request: RequestSummary;
   headingLevel?: "h2" | "h3";
 }) {
+  const t = await getDictionary();
+  const lang = await getLocale();
   const Heading = headingLevel;
+  const unitsLabel = request.units === 1 ? t.requests.card.unitsNeededOne : t.requests.card.unitsNeededOther;
+  const commentsLabel =
+    request.commentCount === 1 ? t.requests.card.commentsOne : t.requests.card.commentsOther;
   const urgent = request.urgency === "urgent" && request.status === "published";
   return (
     <article
@@ -36,25 +42,25 @@ export function BloodRequestCard({
             )}
           </div>
           <Heading className="text-lg leading-snug font-semibold">
-            <Link
+            <LocalizedLink
               href={`/requests/${request.id}`}
               className="after:absolute after:inset-0 after:rounded-card"
             >
-              {request.units} {request.units === 1 ? "Unit" : "Units"} Needed
-            </Link>
+              {interpolate(unitsLabel, { count: formatNumber(request.units, lang) })}
+            </LocalizedLink>
           </Heading>
           <p className="flex items-start gap-1.5 text-sm text-muted">
             <MapPin className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
             <span className="min-w-0">
               <span className="line-clamp-2 text-foreground/90">{request.hospitalName}</span>
-              <span className="block">{request.district}</span>
+              <span className="block">{t.geo.districts[request.district]}</span>
             </span>
           </p>
           <p className="flex items-center gap-1.5 text-sm text-muted">
             <CalendarDays className="size-4 shrink-0" aria-hidden="true" />
             <span>
-              <span className="sr-only">Needed by </span>
-              {formatDate(request.neededAt)}
+              <span className="sr-only">{t.requests.neededBy} </span>
+              {formatDate(request.neededAt, lang)}
             </span>
           </p>
         </div>
@@ -62,15 +68,17 @@ export function BloodRequestCard({
       <div className="mt-auto flex items-center justify-between gap-2 border-t border-outline/60 pt-3.5 text-[0.8125rem] whitespace-nowrap text-muted">
         <span className="flex items-center gap-1.5">
           <MessageSquare className="size-4" aria-hidden="true" />
-          {request.commentCount} {request.commentCount === 1 ? "comment" : "comments"}
+          {interpolate(commentsLabel, { count: formatNumber(request.commentCount, lang) })}
         </span>
         <span className="flex items-center gap-1.5">
           <Clock className="size-4" aria-hidden="true" />
-          <time dateTime={request.createdAt}>{formatRelative(request.createdAt, new Date(), "short")}</time>
+          <time dateTime={request.createdAt}>
+            {formatRelative(request.createdAt, lang, undefined, "short")}
+          </time>
         </span>
         <span className="flex items-center gap-0.5 font-medium text-foreground transition-colors group-hover:text-brand-bright">
-          View
-          <span className="sr-only"> details</span>
+          {t.requests.card.view}
+          <span className="sr-only"> {t.requests.card.details}</span>
           <ChevronRight className="size-4" aria-hidden="true" />
         </span>
       </div>

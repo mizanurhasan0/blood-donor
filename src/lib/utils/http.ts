@@ -17,10 +17,11 @@ export function jsonError(error: unknown): Response {
   // Let Next.js control-flow errors (prerender bail-outs, redirects) propagate.
   unstable_rethrow(error);
   if (error instanceof AppError) {
+    // error.message is a feedback key; the client translates it.
     return Response.json({ error: error.message }, { status: STATUS[error.code] });
   }
   console.error("[route] unexpected error", error);
-  return Response.json({ error: "Something went wrong. Please try again." }, { status: 500 });
+  return Response.json({ error: "somethingWentWrong" }, { status: 500 });
 }
 
 /** Constant-time comparison of a bearer token against the expected secret. */

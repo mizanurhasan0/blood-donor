@@ -100,10 +100,12 @@ function unsubscribeSignature(userId: string): string {
   return createHmac("sha256", env("auth").AUTH_SECRET).update(`unsubscribe:${userId}`).digest("base64url");
 }
 
+/** The page a recipient opens from the email footer (Bangla by default). */
 export function unsubscribeLink(userId: string): string {
-  return `${SITE.url}/unsubscribe?u=${userId}&t=${unsubscribeSignature(userId)}`;
+  return `${SITE.url}/bn/unsubscribe?u=${userId}&t=${unsubscribeSignature(userId)}`;
 }
 
+/** The one-click endpoint mail clients call (RFC 8058). Stays unprefixed. */
 export function unsubscribeApiLink(userId: string): string {
   return `${SITE.url}/api/unsubscribe?u=${userId}&t=${unsubscribeSignature(userId)}`;
 }

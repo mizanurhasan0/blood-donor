@@ -53,7 +53,7 @@ export async function getProfileFormValues(viewer: Viewer): Promise<DonorProfile
 
 export async function updatePreferences(viewer: Viewer, values: Partial<PreferencesValues>): Promise<void> {
   if (!(await updateDonorFlags(viewer.objectId, values))) {
-    throw new AppError("Complete your donor profile first.", "INVALID");
+    throw new AppError("donorProfileRequired", "INVALID");
   }
 }
 
@@ -63,9 +63,9 @@ export async function unsubscribeUser(userId: string): Promise<void> {
 }
 
 export async function createTelegramLink(viewer: Viewer): Promise<string> {
-  if (!viewer.donor) throw new AppError("Complete your donor profile first.", "INVALID");
+  if (!viewer.donor) throw new AppError("donorProfileRequired", "INVALID");
   const limit = await enforceRateLimit("telegramLink", viewer.id);
-  if (!limit.ok) throw new AppError("Too many attempts. Please try again later.", "RATE_LIMITED");
+  if (!limit.ok) throw new AppError("telegramLinkRateLimited", "RATE_LIMITED");
   return TelegramService.createLinkToken(viewer.objectId);
 }
 

@@ -1,3 +1,4 @@
+import { bn as notifyBn } from "@/lib/i18n/messages/notify";
 import { env, isConfigured } from "@/lib/env";
 import { TelegramService } from "@/features/notifications/telegram.service";
 
@@ -18,10 +19,7 @@ async function handleMessage(message: NonNullable<TelegramUpdate["message"]>) {
   if (message.chat.type !== "private" || !message.from || message.from.is_bot) return;
   const match = START_COMMAND.exec(message.text?.trim() ?? "");
   if (!match) {
-    await TelegramService.sendDirect(
-      message.chat.id,
-      "Hi! To join the BloodLink donor channel, open your BloodLink account page and tap “Link Telegram”.",
-    );
+    await TelegramService.sendDirect(message.chat.id, notifyBn.botHelp);
     return;
   }
   const linked = await TelegramService.consumeLinkToken(match[1], message.from.id);
@@ -29,8 +27,8 @@ async function handleMessage(message: NonNullable<TelegramUpdate["message"]>) {
   await TelegramService.sendDirect(
     message.chat.id,
     linked
-      ? `Your Telegram is now linked to your BloodLink donor account.${invite ? `\n\nRequest to join the private donor channel here:\n${invite}` : ""}`
-      : "This link has expired or was already used. Please generate a new one from your BloodLink account page.",
+      ? `${notifyBn.botLinked}${invite ? `\n\n${notifyBn.botInviteIntro}\n${invite}` : ""}`
+      : notifyBn.botLinkExpired,
   );
 }
 
@@ -41,10 +39,7 @@ async function handleJoinRequest(join: NonNullable<TelegramUpdate["chat_join_req
     return;
   }
   // Unlinked accounts stay pending for manual admin review.
-  await TelegramService.sendDirect(
-    join.user_chat_id,
-    "Thanks for your interest! Link your Telegram from your BloodLink account page to be approved automatically. Otherwise an admin will review your request.",
-  ).catch(() => undefined);
+  await TelegramService.sendDirect(join.user_chat_id, notifyBn.botJoinPending).catch(() => undefined);
 }
 
 /**

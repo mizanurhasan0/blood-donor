@@ -3,14 +3,23 @@
 import { CircleCheck, CloudUpload, FileText } from "lucide-react";
 import { useRef, useState, type ChangeEvent, type DragEvent, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import type { Locale } from "@/lib/i18n/config";
+import { formatNumber, interpolate } from "@/lib/i18n/format";
+import { useLocale } from "@/lib/i18n/locale-context";
+import type { ClientDictionary } from "@/lib/i18n/messages";
 import { cn } from "@/lib/utils/cn";
 import { ACCEPT_ATTRIBUTE } from "@/features/storage/file-validation";
-import type { PrescriptionUploadController } from "../hooks/use-blood-request-form";
+import { MAX_DOCUMENT_MB, type PrescriptionUploadController } from "../hooks/use-blood-request-form";
 
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+type SizeLabels = ClientDictionary["requestForm"]["document"]["size"];
+
+function formatBytes(bytes: number, lang: Locale, labels: SizeLabels): string {
+  if (bytes < 1024) return interpolate(labels.bytes, { value: formatNumber(bytes, lang) });
+  if (bytes < 1024 * 1024) {
+    return interpolate(labels.kilobytes, { value: formatNumber(Math.round(bytes / 1024), lang) });
+  }
+  const megabytes = Number((bytes / (1024 * 1024)).toFixed(1));
+  return interpolate(labels.megabytes, { value: formatNumber(megabytes, lang) });
 }
 
 interface PrescriptionUploadProps {
@@ -22,6 +31,8 @@ interface PrescriptionUploadProps {
 
 /** Dashed dropzone over a real file input, so it works with tap, click, keyboard and drag-and-drop. */
 export function PrescriptionUpload({ id, controller, invalid, describedBy }: PrescriptionUploadProps) {
+  const { lang, t } = useLocale();
+  const copy = t.requestForm.document;
   const { state, upload, remove } = controller;
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -72,17 +83,19 @@ export function PrescriptionUpload({ id, controller, invalid, describedBy }: Pre
         >
           <CloudUpload className="size-7 text-muted" aria-hidden="true" />
           <span className="text-sm font-medium text-foreground">
-            <span className="text-brand-bright">Choose a file</span> or drag it here
+            <span className="text-brand-bright">{copy.chooseFile}</span> {copy.dragHere}
           </span>
-          <span className="text-xs text-muted">JPG, PNG, WEBP or PDF · up to 5 MB</span>
+          <span className="text-xs text-muted">
+            {interpolate(copy.accepted, { max: formatNumber(MAX_DOCUMENT_MB, lang) })}
+          </span>
         </label>
       )}
 
       {state.status === "uploading" && (
-        <FileRow name={state.name} size={state.size}>
+        <FileRow name={state.name} size={formatBytes(state.size, lang, copy.size)}>
           <div
             role="progressbar"
-            aria-label={`Uploading ${state.name}`}
+            aria-label={interpolate(copy.uploadingName, { name: state.name })}
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={state.progress}
@@ -94,18 +107,24 @@ export function PrescriptionUpload({ id, controller, invalid, describedBy }: Pre
             />
           </div>
           <p className="mt-1.5 text-xs text-muted">
-            {state.progress < 100 ? `Uploading… ${state.progress}%` : "Checking the file…"}
+            {state.progress < 100
+              ? interpolate(copy.uploading, { percent: formatNumber(state.progress, lang) })
+              : copy.checking}
           </p>
           <div className="mt-2">
             <Button variant="ghost" size="sm" onClick={remove} className="min-h-11">
-              Cancel upload
+              {copy.cancel}
             </Button>
           </div>
         </FileRow>
       )}
 
       {state.status === "done" && (
-        <FileRow name={state.name} size={state.size} done>
+        <FileRow
+          name={state.name}
+          size={formatBytes(state.size, lang, copy.size)}
+          uploadedLabel={copy.uploaded}
+        >
           <div className="mt-3 flex flex-wrap gap-2">
             <Button
               variant="secondary"
@@ -113,10 +132,10 @@ export function PrescriptionUpload({ id, controller, invalid, describedBy }: Pre
               onClick={() => inputRef.current?.click()}
               className="min-h-11"
             >
-              Replace
+              {copy.replace}
             </Button>
             <Button variant="ghost" size="sm" onClick={remove} className="min-h-11">
-              Remove
+              {copy.remove}
             </Button>
           </div>
         </FileRow>
@@ -128,12 +147,12 @@ export function PrescriptionUpload({ id, controller, invalid, describedBy }: Pre
 function FileRow({
   name,
   size,
-  done = false,
+  uploadedLabel,
   children,
 }: {
   name: string;
-  size: number;
-  done?: boolean;
+  size: string;
+  uploadedLabel?: string;
   children: ReactNode;
 }) {
   return (
@@ -146,11 +165,11 @@ function FileRow({
           {name}
         </p>
         <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted">
-          {formatBytes(size)}
-          {done && (
+          {size}
+          {uploadedLabel && (
             <span className="inline-flex items-center gap-1 text-success">
               <CircleCheck className="size-3.5" aria-hidden="true" />
-              Uploaded
+              {uploadedLabel}
             </span>
           )}
         </p>

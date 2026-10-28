@@ -2,6 +2,8 @@ import { BellOff, BellRing, CircleCheck, CirclePause, MapPin, Send } from "lucid
 import type { ReactNode } from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils/cn";
+import { interpolate } from "@/lib/i18n/format";
+import { getDictionary } from "@/lib/i18n/server";
 import type { Viewer } from "@/features/auth/viewer";
 import { BloodGroupBadge } from "@/features/requests/components/badges";
 
@@ -37,7 +39,9 @@ function StatusRow({
 }
 
 /** Read-only donor summary. The phone number is deliberately never displayed. */
-export function DonorProfileCard({ donor }: { donor: DonorProfile }) {
+export async function DonorProfileCard({ donor }: { donor: DonorProfile }) {
+  const t = await getDictionary();
+  const copy = t.donor.profile;
   const iconClass = "size-4";
   return (
     <Card className="flex flex-col gap-5 p-5 sm:p-6">
@@ -47,15 +51,18 @@ export function DonorProfileCard({ donor }: { donor: DonorProfile }) {
           <p className="truncate text-lg font-semibold">{donor.fullName}</p>
           <p className="flex items-center gap-1.5 text-sm text-muted">
             <MapPin className="size-4 shrink-0" aria-hidden="true" />
-            {donor.district}, {donor.division} Division
+            {interpolate(copy.region, {
+              district: t.geo.districts[donor.district],
+              division: t.geo.divisions[donor.division],
+            })}
           </p>
         </div>
       </div>
       <dl className="divide-y divide-outline/60 border-t border-outline/60">
         <StatusRow
-          label="Availability"
+          label={copy.availability}
           active={donor.available}
-          value={donor.available ? "Available to donate" : "Not available right now"}
+          value={donor.available ? copy.availableNow : copy.notAvailable}
           icon={
             donor.available ? (
               <CircleCheck className={iconClass} aria-hidden="true" />
@@ -65,9 +72,9 @@ export function DonorProfileCard({ donor }: { donor: DonorProfile }) {
           }
         />
         <StatusRow
-          label="Email alerts"
+          label={copy.emailAlerts}
           active={donor.emailNotifications}
-          value={donor.emailNotifications ? "On" : "Off"}
+          value={donor.emailNotifications ? copy.on : copy.off}
           icon={
             donor.emailNotifications ? (
               <BellRing className={iconClass} aria-hidden="true" />
@@ -77,9 +84,9 @@ export function DonorProfileCard({ donor }: { donor: DonorProfile }) {
           }
         />
         <StatusRow
-          label="Telegram"
+          label={copy.telegram}
           active={donor.telegramLinked}
-          value={donor.telegramLinked ? "Linked" : "Not linked"}
+          value={donor.telegramLinked ? copy.linked : copy.notLinked}
           icon={<Send className={iconClass} aria-hidden="true" />}
         />
       </dl>

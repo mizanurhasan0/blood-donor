@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import { Container } from "@/components/ui/container";
+import { interpolate } from "@/lib/i18n/format";
+import { getDictionary } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils/cn";
 
 /** Readable long-form text styles for policy and help pages (no typography plugin needed). */
@@ -19,8 +21,11 @@ export function Prose({ className, children }: { className?: string; children: R
   );
 }
 
-/** Shared shell for the privacy policy and terms: heading, last-updated line and prose body. */
-export function LegalPage({
+/**
+ * Shared shell for the privacy policy and terms: heading, last-updated line and prose body.
+ * `updated` is already formatted for the page's language (use formatDate).
+ */
+export async function LegalPage({
   title,
   updated,
   intro,
@@ -31,11 +36,12 @@ export function LegalPage({
   intro: ReactNode;
   children: ReactNode;
 }) {
+  const t = await getDictionary();
   return (
     <Container className="max-w-3xl py-10 sm:py-14">
       <header className="flex flex-col gap-3 border-b border-outline/70 pb-8">
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{title}</h1>
-        <p className="text-sm text-muted">Last updated: {updated}</p>
+        <p className="text-sm text-muted">{interpolate(t.common.lastUpdated, { date: updated })}</p>
         <p className="text-lg leading-relaxed text-muted">{intro}</p>
       </header>
       <Prose>{children}</Prose>

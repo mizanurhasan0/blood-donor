@@ -1,12 +1,36 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { NAV_LINKS } from "@/lib/constants/site";
+import { LocalizedLink } from "@/lib/i18n/localized-link";
+import { useT } from "@/lib/i18n/locale-context";
+import { startsWithLocale } from "@/lib/i18n/paths";
 import { cn } from "@/lib/utils/cn";
 
-function isActive(pathname: string, href: string) {
-  return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+export interface NavItem {
+  href: string;
+  label: string;
+}
+
+/** The main site sections, with labels in the visitor's language. Hrefs are unprefixed. */
+export function useNavItems(): NavItem[] {
+  const t = useT();
+  return [
+    { href: "/", label: t.nav.home },
+    { href: "/requests", label: t.nav.bloodRequests },
+    { href: "/become-donor", label: t.nav.becomeDonor },
+    { href: "/how-it-works", label: t.nav.howItWorks },
+  ];
+}
+
+/** "/bn/requests/3" → "/requests/3", so active checks ignore the language prefix. */
+export function unprefixedPath(pathname: string): string {
+  if (!startsWithLocale(pathname)) return pathname;
+  return pathname.slice(3) || "/";
+}
+
+export function isActive(pathname: string, href: string) {
+  const path = unprefixedPath(pathname);
+  return href === "/" ? path === "/" : path === href || path.startsWith(`${href}/`);
 }
 
 /** Desktop navigation with an animated underline on the active route. */
@@ -16,13 +40,14 @@ export function NavLinks() {
 }
 
 export function NavList({ pathname }: { pathname: string | null }) {
+  const items = useNavItems();
   return (
     <ul className="flex items-center gap-1">
-      {NAV_LINKS.map((link) => {
+      {items.map((link) => {
         const active = pathname !== null && isActive(pathname, link.href);
         return (
           <li key={link.href}>
-            <Link
+            <LocalizedLink
               href={link.href}
               aria-current={active ? "page" : undefined}
               className={cn(
@@ -38,7 +63,7 @@ export function NavList({ pathname }: { pathname: string | null }) {
                   active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-50",
                 )}
               />
-            </Link>
+            </LocalizedLink>
           </li>
         );
       })}

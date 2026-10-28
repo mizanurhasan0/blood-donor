@@ -1,0 +1,51 @@
+// Owner: donors & account area (account page). Keep en and bn keys identical (bn is type-checked against en).
+
+export const en = {
+  metaTitle: "My account",
+  title: "My account",
+  signedInAs: "Signed in as {email}",
+  donorProfile: "Donor profile",
+  editProfile: "Edit profile",
+  profileUpdated: "Profile updated.",
+  notRegisteredTitle: "You're not registered as a donor yet",
+  notRegisteredText: "Add your blood group and district to get alerts when someone nearby needs help.",
+  becomeDonor: "Become a donor",
+  notifications: "Notifications",
+  registerForAlerts: "Register as a donor to choose how we alert you about nearby requests.",
+  myRequests: "My blood requests",
+  myRequestsHint: "Open a request to see its progress or mark it fulfilled.",
+  postRequest: "Post a request",
+  noRequestsTitle: "No requests yet",
+  noRequestsText:
+    "When you post a blood request, you can follow its review here and mark it fulfilled once you have donors.",
+  unit: "{count} unit needed",
+  units: "{count} units needed",
+  neededByPosted: "Needed by {date} · Posted {time}",
+  signOut: "Sign out",
+  deleteAccount: "Delete account",
+};
+
+export const bn: typeof en = {
+  metaTitle: "আমার অ্যাকাউন্ট",
+  title: "আমার অ্যাকাউন্ট",
+  signedInAs: "সাইন ইন করা আছে: {email}",
+  donorProfile: "রক্তদাতা প্রোফাইল",
+  editProfile: "প্রোফাইল সম্পাদনা করুন",
+  profileUpdated: "প্রোফাইল হালনাগাদ হয়েছে।",
+  notRegisteredTitle: "আপনি এখনো রক্তদাতা হিসেবে নিবন্ধিত নন",
+  notRegisteredText: "কাছের কেউ সাহায্য চাইলে বিজ্ঞপ্তি পেতে আপনার রক্তের গ্রুপ ও জেলা যোগ করুন।",
+  becomeDonor: "রক্তদাতা হন",
+  notifications: "বিজ্ঞপ্তি",
+  registerForAlerts: "কাছের অনুরোধ নিয়ে কীভাবে বিজ্ঞপ্তি পাবেন তা ঠিক করতে রক্তদাতা হিসেবে নিবন্ধন করুন।",
+  myRequests: "আমার রক্তের অনুরোধ",
+  myRequestsHint: "অগ্রগতি দেখতে, বা পূরণ হয়েছে বলে চিহ্নিত করতে একটি অনুরোধ খুলুন।",
+  postRequest: "অনুরোধ দিন",
+  noRequestsTitle: "এখনো কোনো অনুরোধ নেই",
+  noRequestsText:
+    "রক্তের অনুরোধ দিলে এখানে তার পর্যালোচনা অনুসরণ করতে পারবেন, এবং রক্তদাতা পেলে সেটি পূরণ হয়েছে বলে চিহ্নিত করতে পারবেন।",
+  unit: "{count} ইউনিট রক্ত প্রয়োজন",
+  units: "{count} ইউনিট রক্ত প্রয়োজন",
+  neededByPosted: "প্রয়োজন: {date} · পোস্ট করা হয়েছে {time}",
+  signOut: "সাইন আউট",
+  deleteAccount: "অ্যাকাউন্ট মুছুন",
+};

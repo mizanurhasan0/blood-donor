@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useT } from "@/lib/i18n/locale-context";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "./button";
 
@@ -19,6 +20,7 @@ interface DialogProps {
  * backdrop come from the browser, so no portal or focus library is needed.
  */
 export function Dialog({ open, onClose, title, description, children, className }: DialogProps) {
+  const t = useT();
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
 
@@ -55,7 +57,7 @@ export function Dialog({ open, onClose, title, description, children, className 
             className="-m-2 grid size-10 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-elevated hover:text-foreground"
           >
             <X className="size-5" aria-hidden="true" />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{t.common.close}</span>
           </button>
         </div>
         {children}
@@ -78,11 +80,12 @@ export function ConfirmDialog({
   destructive = true,
   ...props
 }: ConfirmDialogProps) {
+  const t = useT();
   return (
     <Dialog {...props}>
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <Button variant="ghost" onClick={props.onClose} disabled={pending}>
-          Cancel
+          {t.common.cancel}
         </Button>
         <Button variant={destructive ? "danger" : "primary"} onClick={onConfirm} pending={pending}>
           {confirmLabel}

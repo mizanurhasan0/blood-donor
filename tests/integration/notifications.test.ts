@@ -163,8 +163,8 @@ describe("processNotificationJobs", () => {
     });
     expect(sent.map((m) => m.to.email).sort()).toEqual(donors.map((d) => d.email).sort());
     for (const message of sent) {
-      expect(message.subject).toBe("Urgent: Blood Needed: B+ in Dhaka");
-      expect(message.html).toContain(`https://bloodlink.test/requests/${request._id.toHexString()}`);
+      expect(message.subject).toBe("জরুরি: রক্ত প্রয়োজন: B+, ঢাকা");
+      expect(message.html).toContain(`https://bloodlink.test/bn/requests/${request._id.toHexString()}`);
       const unsubscribe = new URL(message.headers!["List-Unsubscribe"].slice(1, -1));
       const donor = donors.find((d) => d.email === message.to.email)!;
       expect(unsubscribe.searchParams.get("u")).toBe(donor._id.toHexString());

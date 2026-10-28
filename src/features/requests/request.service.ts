@@ -63,24 +63,20 @@ async function loadOrThrow(id: string): Promise<BloodRequestDoc> {
 /** Checks an uploaded document really belongs to this user and is an allowed type. */
 async function verifyDocument(viewer: Viewer, key: string): Promise<StoredDocument> {
   if (!key.startsWith(`prescriptions/${viewer.id}/`)) {
-    throw new AppError("Upload the document again.", "INVALID");
+    throw new AppError("documentUploadAgain", "INVALID");
   }
   const meta = await headObject(key);
   if (!meta || !(meta.contentType in ALLOWED_DOCUMENT_TYPES)) {
-    throw new AppError("We couldn't find your uploaded document. Please upload it again.", "INVALID");
+    throw new AppError("documentMissing", "INVALID");
   }
   return { key, contentType: meta.contentType, size: meta.size };
 }
 
 export async function createBloodRequest(viewer: Viewer, values: BloodRequestValues): Promise<string> {
   const limit = await enforceRateLimit("requestCreate", viewer.id);
-  if (!limit.ok)
-    throw new AppError("You've posted several requests today. Please try again tomorrow.", "RATE_LIMITED");
+  if (!limit.ok) throw new AppError("requestRateLimited", "RATE_LIMITED");
   if ((await countPendingByCreator(viewer.objectId)) >= MAX_PENDING_PER_USER) {
-    throw new AppError(
-      "You already have requests waiting for review. Please wait for them to be checked.",
-      "CONFLICT",
-    );
+    throw new AppError("pendingRequestLimit", "CONFLICT");
   }
 
   const prescription = values.documentKey ? await verifyDocument(viewer, values.documentKey) : undefined;

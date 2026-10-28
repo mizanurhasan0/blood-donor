@@ -1,6 +1,8 @@
 import { CalendarDays, Clock, FileText, Flag, MapPin, Phone } from "lucide-react";
+import { Rich } from "@/components/shared/rich-text";
 import { Badge } from "@/components/ui/badge";
-import { formatDate, formatRelative } from "@/lib/utils/dates";
+import { formatDate, formatNumber, formatRelative, interpolate } from "@/lib/i18n/format";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { BloodGroupBadge, RequestStatusBadge, UrgencyBadge } from "@/features/requests/components/badges";
 import type { ModerationItem } from "@/features/requests/types";
 import { RequestActions } from "./request-actions";
@@ -8,8 +10,19 @@ import { RequestActions } from "./request-actions";
 export type ModerationRequest = ModerationItem;
 
 /** Request-time only: renders relative dates from the current time. */
-export function ModerationRequestCard({ request }: { request: ModerationRequest }) {
-  const units = `${request.units} ${request.units === 1 ? "unit" : "units"}`;
+export async function ModerationRequestCard({ request }: { request: ModerationRequest }) {
+  const [t, lang] = await Promise.all([getDictionary(), getLocale()]);
+  const m = t.moderation;
+  const units = interpolate(request.units === 1 ? m.card.unitsOne : m.card.unitsOther, {
+    count: formatNumber(request.units, lang),
+  });
+  const reports = interpolate(request.reportCount === 1 ? m.card.reportOne : m.card.reportOther, {
+    count: formatNumber(request.reportCount, lang),
+  });
+  // Stored values stay English (database keys); show the name in the current language.
+  const districtName = (t.geo.districts as Record<string, string>)[request.district] ?? request.district;
+  const divisionName = (t.geo.divisions as Record<string, string>)[request.division] ?? request.division;
+
   return (
     <article className="flex flex-col gap-4 rounded-card border border-outline/70 bg-card p-5 shadow-card">
       <div className="flex items-start gap-4">
@@ -21,7 +34,7 @@ export function ModerationRequestCard({ request }: { request: ModerationRequest 
             {request.reportCount > 0 && (
               <Badge tone="warning">
                 <Flag className="size-3" aria-hidden="true" />
-                {request.reportCount} {request.reportCount === 1 ? "report" : "reports"}
+                {reports}
               </Badge>
             )}
           </div>
@@ -31,21 +44,26 @@ export function ModerationRequestCard({ request }: { request: ModerationRequest 
           <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
             <li className="flex items-center gap-1.5">
               <MapPin className="size-4 shrink-0" aria-hidden="true" />
-              {request.district}, {request.division}
+              {districtName}, {divisionName}
             </li>
             <li className="flex items-center gap-1.5">
               <CalendarDays className="size-4 shrink-0" aria-hidden="true" />
-              Needed {formatDate(request.neededAt)}
+              {interpolate(m.card.neededAt, { date: formatDate(request.neededAt, lang) })}
             </li>
             <li className="flex items-center gap-1.5">
               <Clock className="size-4 shrink-0" aria-hidden="true" />
-              Posted <time dateTime={request.createdAt}>{formatRelative(request.createdAt)}</time>
+              <Rich
+                text={m.card.posted}
+                values={{
+                  time: <time dateTime={request.createdAt}>{formatRelative(request.createdAt, lang)}</time>,
+                }}
+              />
             </li>
             <li className="flex items-center gap-1.5">
               <Phone className="size-4 shrink-0" aria-hidden="true" />
               <span className="tabular-nums">{request.contactPhoneMasked}</span>
               <span className="text-xs">
-                ({request.allowPhoneReveal ? "donors may reveal" : "hidden from donors"})
+                ({request.allowPhoneReveal ? m.card.revealAllowed : m.card.revealHidden})
               </span>
             </li>
           </ul>
@@ -67,16 +85,16 @@ export function ModerationRequestCard({ request }: { request: ModerationRequest 
             className="inline-flex min-h-11 items-center gap-1.5 font-medium text-info underline-offset-4 hover:underline"
           >
             <FileText className="size-4" aria-hidden="true" />
-            View document
-            <span className="sr-only"> (opens in a new tab)</span>
+            {m.card.viewDocument}
+            <span className="sr-only">{m.card.newTab}</span>
           </a>
-          <Badge>{request.shareDocumentWithDonors ? "Shared with donors" : "Private"}</Badge>
+          <Badge>{request.shareDocumentWithDonors ? m.card.sharedWithDonors : m.card.private}</Badge>
         </p>
       )}
 
       {request.moderationNote && (
         <p className="rounded-button border border-outline/70 bg-surface px-3 py-2 text-sm text-muted">
-          <span className="font-medium text-foreground">Moderator note:</span> {request.moderationNote}
+          <span className="font-medium text-foreground">{m.card.moderatorNote}</span> {request.moderationNote}
         </p>
       )}
 

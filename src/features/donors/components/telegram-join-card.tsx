@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonClasses } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { env } from "@/lib/env";
+import { getDictionary } from "@/lib/i18n/server";
 import { TelegramLinkButton } from "./telegram-link-button";
 
 function Step({ number, title, children }: { number: number; title: string; children: ReactNode }) {
@@ -27,6 +28,8 @@ function Step({ number, title, children }: { number: number; title: string; chil
  */
 export async function TelegramJoinCard({ linked, isDonor }: { linked: boolean; isDonor: boolean }) {
   await connection();
+  const t = await getDictionary();
+  const copy = t.donor.telegram;
   const { TELEGRAM_BOT_USERNAME: bot, TELEGRAM_CHANNEL_INVITE_LINK: invite } = env("telegramPublic");
   const inviteUrl = invite?.startsWith("https://") ? invite : undefined;
 
@@ -38,51 +41,43 @@ export async function TelegramJoinCard({ linked, isDonor }: { linked: boolean; i
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-semibold">Private Telegram donor channel</h2>
-            {linked && <Badge tone="success">Linked</Badge>}
+            <h2 className="text-lg font-semibold">{copy.title}</h2>
+            {linked && <Badge tone="success">{copy.linkedBadge}</Badge>}
           </div>
-          <p className="text-sm text-muted">
-            Approved blood requests are also posted to a private Telegram channel, if you prefer alerts there.
-          </p>
+          <p className="text-sm text-muted">{copy.intro}</p>
         </div>
       </div>
 
       {!inviteUrl ? (
-        <p className="rounded-button bg-elevated/60 px-4 py-3 text-sm text-muted">
-          Telegram community coming soon. Email alerts work in the meantime.
-        </p>
+        <p className="rounded-button bg-elevated/60 px-4 py-3 text-sm text-muted">{copy.comingSoon}</p>
       ) : (
         <ol className="flex flex-col gap-5">
           {bot && (
-            <Step number={1} title="Link your Telegram account">
+            <Step number={1} title={copy.linkStepTitle}>
               {linked ? (
                 <p className="flex items-center gap-1.5 text-sm text-success">
                   <CircleCheck className="size-4" aria-hidden="true" />
-                  Your Telegram account is linked to your donor profile.
+                  {copy.linkedText}
                 </p>
               ) : isDonor ? (
                 <TelegramLinkButton />
               ) : (
-                <p className="text-sm text-muted">Register as a donor first, then link Telegram here.</p>
+                <p className="text-sm text-muted">{copy.registerFirst}</p>
               )}
             </Step>
           )}
-          <Step number={bot ? 2 : 1} title="Request to join the channel">
+          <Step number={bot ? 2 : 1} title={copy.joinStepTitle}>
             <a
               href={inviteUrl}
               target="_blank"
               rel="noopener noreferrer"
               className={buttonClasses(linked ? "primary" : "secondary", "md", "self-start")}
             >
-              Request to join
+              {copy.requestToJoin}
               <ExternalLink className="size-4" aria-hidden="true" />
-              <span className="sr-only">(opens Telegram)</span>
+              <span className="sr-only">{copy.opensTelegram}</span>
             </a>
-            <p className="text-xs text-muted">
-              {bot
-                ? "Requests from linked donors are approved automatically. Others are reviewed by an admin."
-                : "Join requests are reviewed by an admin."}
-            </p>
+            <p className="text-xs text-muted">{bot ? copy.joinNoteAutoApproved : copy.joinNoteAdminReview}</p>
           </Step>
         </ol>
       )}

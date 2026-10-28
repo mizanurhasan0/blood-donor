@@ -29,15 +29,15 @@ export type DocumentValidation =
   { ok: true; contentType: AllowedDocumentType; extension: string } | { ok: false; error: string };
 
 export function validateDocument(bytes: Uint8Array, declaredType: string): DocumentValidation {
-  if (bytes.byteLength === 0) return { ok: false, error: "The file is empty." };
+  if (bytes.byteLength === 0) return { ok: false, error: "fileEmpty" };
   if (bytes.byteLength > LIMITS.documentMaxBytes) {
-    return { ok: false, error: "The file is larger than 5 MB." };
+    return { ok: false, error: "documentTooLarge" };
   }
   const detected = sniffDocumentType(bytes);
-  if (!detected) return { ok: false, error: "Upload a JPG, PNG, WEBP or PDF file." };
+  if (!detected) return { ok: false, error: "fileTypeInvalid" };
   // Allow an empty declared type (some Android browsers omit it), but never a mismatch.
   if (declaredType && declaredType !== detected) {
-    return { ok: false, error: "The file type does not match its contents." };
+    return { ok: false, error: "fileTypeMismatch" };
   }
   return { ok: true, contentType: detected, extension: ALLOWED_DOCUMENT_TYPES[detected] };
 }

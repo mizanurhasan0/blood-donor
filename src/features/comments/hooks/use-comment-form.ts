@@ -4,7 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRef, useState, useTransition, type BaseSyntheticEvent } from "react";
 import { useForm, useWatch, type FieldErrors } from "react-hook-form";
 import type { z } from "zod";
-import type { ActionResult } from "@/lib/utils/result";
+import { translate } from "@/lib/i18n/format";
+import { useT } from "@/lib/i18n/locale-context";
 import { commentSchema } from "@/lib/validators/comment";
 import { addCommentAction } from "../actions";
 import type { CommentView } from "../types";
@@ -18,13 +19,9 @@ interface Options {
   onPosted: (comment: CommentView) => void;
 }
 
-const OFFLINE: ActionResult<never> = {
-  ok: false,
-  error: "Couldn't reach the server. Check your connection and try again.",
-};
-
 /** RHF + zod validation for the comment form, posting through addCommentAction in a transition. */
 export function useCommentForm({ requestId, parentId, onPosted }: Options) {
+  const t = useT();
   const [pending, startTransition] = useTransition();
   const [serverError, setServerError] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState("");
@@ -44,23 +41,28 @@ export function useCommentForm({ requestId, parentId, onPosted }: Options) {
     setServerError(null);
     setAnnouncement("");
     startTransition(async () => {
-      const result = await addCommentAction(values).catch(() => OFFLINE);
+      const result = await addCommentAction(values).catch(() => null);
       inFlight.current = false;
+      if (!result) {
+        setServerError(t.comments.offlineCheck);
+        return;
+      }
       if (!result.ok) {
+        // Field errors stay as keys: the form shows them translated at render time.
         const fieldError = result.fieldErrors?.content?.[0];
         if (fieldError) form.setError("content", { message: fieldError }, { shouldFocus: true });
-        else setServerError(result.error);
+        else setServerError(translate(t.feedback, result.error));
         return;
       }
       form.reset({ requestId, parentId, content: "" });
-      setAnnouncement(parentId ? "Reply posted" : "Comment posted");
+      setAnnouncement(parentId ? t.comments.replyPosted : t.comments.commentPosted);
       onPosted(result.data);
     });
   }
 
   // Only `content` is user-editable; any other failure means the page itself is stale.
   function onInvalid(errors: FieldErrors<FormInput>) {
-    if (!errors.content) setServerError("Something went wrong. Please refresh the page and try again.");
+    if (!errors.content) setServerError(t.comments.staleForm);
   }
 
   const submit = (event?: BaseSyntheticEvent) => form.handleSubmit(onValid, onInvalid)(event);

@@ -3,16 +3,17 @@ import { BLOOD_GROUPS } from "@/lib/constants/blood-groups";
 import { DISTRICT_NAMES } from "@/lib/constants/locations";
 import { normalizeBdPhone } from "@/lib/utils/phone";
 
-export const objectIdSchema = z.string().regex(/^[a-f\d]{24}$/i, "Invalid id");
+// Messages are feedback keys (see lib/i18n/messages/feedback.ts), translated on screen.
+export const objectIdSchema = z.string({ error: "Invalid id" }).regex(/^[a-f\d]{24}$/i, "Invalid id");
 
-export const bloodGroupSchema = z.enum(BLOOD_GROUPS, { error: "Select a blood group" });
+export const bloodGroupSchema = z.enum(BLOOD_GROUPS, { error: "bloodGroupRequired" });
 
-export const districtSchema = z.enum(DISTRICT_NAMES, { error: "Select a district" });
+export const districtSchema = z.enum(DISTRICT_NAMES, { error: "districtRequired" });
 
 export const bdPhoneSchema = z
-  .string()
+  .string({ error: "This field is required" })
   .trim()
-  .refine((v) => normalizeBdPhone(v) !== null, "Enter a valid Bangladeshi mobile number (01XXXXXXXXX)")
+  .refine((v) => normalizeBdPhone(v) !== null, "bdPhoneInvalid")
   .transform((v) => normalizeBdPhone(v)!);
 
 /** Strips control characters (except newlines/tabs) from free text. */

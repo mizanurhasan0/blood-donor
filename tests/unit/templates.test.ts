@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { bn as notifyBn } from "@/lib/i18n/messages/notify";
 import {
   emailBody,
   emailSubject,
@@ -36,12 +37,12 @@ describe("escapeHtml", () => {
 
 describe("emailSubject", () => {
   it("names the blood group and district", () => {
-    expect(emailSubject(notifiable())).toBe("Blood Needed: B+ in Dhaka");
+    expect(emailSubject(notifiable())).toBe("রক্ত প্রয়োজন: B+, ঢাকা");
   });
 
   it("flags urgent requests", () => {
     expect(emailSubject(notifiable({ urgency: "urgent", bloodGroup: "O-", district: "Sylhet" }))).toBe(
-      "Urgent: Blood Needed: O- in Sylhet",
+      "জরুরি: রক্ত প্রয়োজন: O-, সিলেট",
     );
   });
 });
@@ -67,12 +68,12 @@ describe("emailBody", () => {
     const { html, text } = emailBody(notifiable(), "Karim", UNSUBSCRIBE);
     for (const part of [html, text]) {
       expect(part).toContain("Dhaka Medical College Hospital");
-      expect(part).toContain("11 March 2026");
-      expect(part).toContain("https://bloodlink.test/requests/65f1c0ffee0000000000abcd");
+      expect(part).toContain("১১ মার্চ, ২০২৬");
+      expect(part).toContain("https://bloodlink.test/bn/requests/65f1c0ffee0000000000abcd");
       expect(part).toContain(UNSUBSCRIBE);
     }
-    expect(text).toContain("Units needed: 2");
-    expect(text).toContain("Medical staff decide donation eligibility");
+    expect(text).toContain("প্রয়োজনীয় ইউনিট: ২");
+    expect(text).toContain(notifyBn.safetyNotice);
   });
 
   it("shortens long descriptions", () => {
@@ -86,12 +87,12 @@ describe("emailBody", () => {
 describe("telegramMessage", () => {
   it("contains the request facts and link", () => {
     const message = telegramMessage(notifiable({ urgency: "urgent" }));
-    expect(message).toContain("<b>B+ BLOOD NEEDED</b> · URGENT");
-    expect(message).toContain("Hospital: Dhaka Medical College Hospital");
-    expect(message).toContain("District: Dhaka");
-    expect(message).toContain("Units: 2");
-    expect(message).toContain("Needed: 11 March 2026");
-    expect(message).toContain("https://bloodlink.test/requests/65f1c0ffee0000000000abcd");
+    expect(message).toContain("<b>B+ রক্ত প্রয়োজন</b> · জরুরি");
+    expect(message).toContain("হাসপাতাল: Dhaka Medical College Hospital");
+    expect(message).toContain("জেলা: ঢাকা");
+    expect(message).toContain("প্রয়োজনীয় ইউনিট: ২");
+    expect(message).toContain("প্রয়োজনের তারিখ: ১১ মার্চ, ২০২৬");
+    expect(message).toContain("https://bloodlink.test/bn/requests/65f1c0ffee0000000000abcd");
   });
 
   it("never includes contact details or the free-text description", () => {
@@ -103,12 +104,12 @@ describe("telegramMessage", () => {
 
   it("escapes the hospital name for Telegram's HTML parse mode", () => {
     const message = telegramMessage(notifiable({ hospitalName: "Square <Hospital> & Co" }));
-    expect(message).toContain("Hospital: Square &#60;Hospital&#62; &#38; Co");
+    expect(message).toContain("হাসপাতাল: Square &#60;Hospital&#62; &#38; Co");
   });
 });
 
 describe("requestUrl", () => {
   it("builds absolute links from the configured site URL without a double slash", () => {
-    expect(requestUrl("abc")).toBe("https://bloodlink.test/requests/abc");
+    expect(requestUrl("abc")).toBe("https://bloodlink.test/bn/requests/abc");
   });
 });

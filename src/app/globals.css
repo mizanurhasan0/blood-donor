@@ -131,6 +131,18 @@
   }
 }
 
+/* Bangla letters join into conjuncts; letter-spacing and uppercase (English styling) pull them apart. */
+html:lang(bn) .tracking-tight,
+html:lang(bn) .tracking-wide,
+html:lang(bn) .tracking-widest,
+html:lang(bn) [class*="tracking-["] {
+  letter-spacing: normal;
+}
+
+html:lang(bn) .uppercase {
+  text-transform: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

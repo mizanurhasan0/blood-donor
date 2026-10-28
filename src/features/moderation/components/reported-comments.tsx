@@ -1,9 +1,10 @@
 import { ArrowUpRight, Flag } from "lucide-react";
-import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/states";
-import { formatRelative } from "@/lib/utils/dates";
+import { formatNumber, formatRelative, interpolate } from "@/lib/i18n/format";
+import { LocalizedLink } from "@/lib/i18n/localized-link";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { listReportedComments } from "@/features/comments/comment.repository";
 import { findUsersByIds } from "@/features/users/user.repository";
 import { CommentActions } from "./comment-actions";
@@ -18,7 +19,7 @@ interface ReportedComment {
 }
 
 /** Maps repository docs (ObjectIds, Dates) to plain values safe for client props. */
-async function loadReportedComments(): Promise<ReportedComment[]> {
+async function loadReportedComments(deletedUserLabel: string): Promise<ReportedComment[]> {
   const docs = await listReportedComments();
   const authors = await findUsersByIds([
     ...new Map(docs.map((d) => [d.authorId.toHexString(), d.authorId])).values(),
@@ -27,7 +28,7 @@ async function loadReportedComments(): Promise<ReportedComment[]> {
   return docs.map((doc) => ({
     id: doc._id.toHexString(),
     requestId: doc.requestId.toHexString(),
-    authorName: names.get(doc.authorId.toHexString()) ?? "Deleted user",
+    authorName: names.get(doc.authorId.toHexString()) ?? deletedUserLabel,
     content: doc.content,
     reportCount: doc.reportCount ?? 0,
     createdAt: doc.createdAt.toISOString(),
@@ -35,14 +36,16 @@ async function loadReportedComments(): Promise<ReportedComment[]> {
 }
 
 export async function ReportedComments() {
-  const comments = await loadReportedComments();
+  const [t, lang] = await Promise.all([getDictionary(), getLocale()]);
+  const m = t.moderation.reported;
+  const comments = await loadReportedComments(m.deletedUser);
   return (
     <section aria-labelledby="reported-comments-title" className="flex flex-col gap-4">
       <h2 id="reported-comments-title" className="text-lg font-semibold">
-        Reported comments <span className="font-normal text-muted">({comments.length})</span>
+        {m.heading} <span className="font-normal text-muted">({formatNumber(comments.length, lang)})</span>
       </h2>
       {comments.length === 0 ? (
-        <EmptyState title="No reported comments" description="Comments people flag will appear here." />
+        <EmptyState title={m.empty} description={m.emptyHint} />
       ) : (
         <ul className="flex flex-col gap-3">
           {comments.map((comment) => (
@@ -53,24 +56,27 @@ export async function ReportedComments() {
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
                 <span className="font-medium">{comment.authorName}</span>
                 <time dateTime={comment.createdAt} className="text-muted">
-                  {formatRelative(comment.createdAt)}
+                  {formatRelative(comment.createdAt, lang)}
                 </time>
                 <Badge tone="warning">
                   <Flag className="size-3" aria-hidden="true" />
-                  {comment.reportCount} {comment.reportCount === 1 ? "report" : "reports"}
+                  {interpolate(
+                    comment.reportCount === 1 ? t.moderation.card.reportOne : t.moderation.card.reportOther,
+                    { count: formatNumber(comment.reportCount, lang) },
+                  )}
                 </Badge>
               </div>
               <p className="text-sm leading-relaxed break-words whitespace-pre-line text-foreground/90">
                 {comment.content}
               </p>
               <div className="flex flex-wrap items-center justify-between gap-2 border-t border-outline/60 pt-3">
-                <Link
+                <LocalizedLink
                   href={`/requests/${comment.requestId}`}
                   className="inline-flex min-h-9 items-center gap-1 text-sm font-medium text-info underline-offset-4 hover:underline"
                 >
-                  View request
+                  {m.viewRequest}
                   <ArrowUpRight className="size-4" aria-hidden="true" />
-                </Link>
+                </LocalizedLink>
                 <CommentActions commentId={comment.id} />
               </div>
             </li>

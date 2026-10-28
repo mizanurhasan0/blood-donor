@@ -1,5 +1,8 @@
+"use client";
+
 import { ChevronDown } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
+import { useT } from "@/lib/i18n/locale-context";
 import { cn } from "@/lib/utils/cn";
 
 export const controlClasses =
@@ -17,11 +20,12 @@ interface FieldProps {
 
 /** Label + control + hint/error wiring. Controls should set aria-describedby via describedBy(). */
 export function Field({ id, label, error, hint, optional, className, children }: FieldProps) {
+  const t = useT();
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
       <label htmlFor={id} className="text-sm font-medium text-foreground">
         {label}
-        {optional && <span className="ml-1 font-normal text-muted">(optional)</span>}
+        {optional && <span className="ml-1 font-normal text-muted">{t.common.optional}</span>}
       </label>
       {children}
       {hint && !error && (

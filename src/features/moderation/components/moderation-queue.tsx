@@ -1,34 +1,21 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/states";
+import { formatNumber } from "@/lib/i18n/format";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { listForModeration } from "@/features/requests/request.repository";
 import { ModerationRequestCard } from "./moderation-request-card";
 import type { ModerationView } from "./moderation-tabs";
 
-const COPY: Record<ModerationView, { title: string; empty: string }> = {
-  pending: {
-    title: "Waiting for review",
-    empty: "No requests are waiting for review. New ones appear here first.",
-  },
-  reported: {
-    title: "Reported requests",
-    empty: "No requests have open reports.",
-  },
-  recent: {
-    title: "Latest requests",
-    empty: "No requests have been posted yet.",
-  },
-};
-
 export async function ModerationQueue({ view }: { view: ModerationView }) {
-  const items = await listForModeration(view);
-  const { title, empty } = COPY[view];
+  const [t, lang, items] = await Promise.all([getDictionary(), getLocale(), listForModeration(view)]);
+  const { title, empty } = t.moderation.queue[view];
   return (
     <section aria-labelledby="queue-title" className="flex flex-col gap-4">
       <h2 id="queue-title" className="text-lg font-semibold">
-        {title} <span className="font-normal text-muted">({items.length})</span>
+        {title} <span className="font-normal text-muted">({formatNumber(items.length, lang)})</span>
       </h2>
       {items.length === 0 ? (
-        <EmptyState title="All clear" description={empty} />
+        <EmptyState title={t.moderation.queue.allClear} description={empty} />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {items.map((item) => (

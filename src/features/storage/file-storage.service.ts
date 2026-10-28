@@ -29,7 +29,7 @@ async function send(key: string, init: RequestInit & { allow404?: boolean }): Pr
   const { client, objectUrl } = storage();
   const response = await client.fetch(objectUrl(key), init);
   if (!response.ok && !(init.allow404 && response.status === 404)) {
-    throw new AppError(`Storage request failed (${response.status}).`, "UNAVAILABLE");
+    throw new AppError("storageUnavailable", "UNAVAILABLE");
   }
   return response;
 }

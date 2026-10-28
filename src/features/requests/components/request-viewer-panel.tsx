@@ -2,6 +2,7 @@ import { ExternalLink, FileText, Lock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getViewer } from "@/features/auth/viewer";
+import { getDictionary } from "@/lib/i18n/server";
 import {
   canManageRequest,
   canMarkFulfilled,
@@ -65,7 +66,7 @@ export async function ViewerActions({ request }: { request: RequestDetail }) {
   );
 }
 
-function DocumentCard({
+async function DocumentCard({
   requestId,
   canView,
   sharedWithDonors,
@@ -74,11 +75,12 @@ function DocumentCard({
   canView: boolean;
   sharedWithDonors: boolean;
 }) {
+  const t = await getDictionary();
   return (
     <Card className="flex flex-col gap-3 p-5">
       <h2 className="flex items-center gap-2 text-base font-semibold">
         <FileText className="size-4 text-muted" aria-hidden="true" />
-        Supporting document
+        {t.requests.document.title}
       </h2>
       {canView ? (
         <a
@@ -87,16 +89,14 @@ function DocumentCard({
           rel="noopener"
           className="inline-flex min-h-11 items-center justify-center gap-2 rounded-pill border border-outline px-5 text-sm font-medium transition-colors hover:border-muted hover:bg-surface"
         >
-          View document
+          {t.requests.document.view}
           <ExternalLink className="size-4" aria-hidden="true" />
-          <span className="sr-only">(opens in a new tab)</span>
+          <span className="sr-only">{t.requests.document.newTab}</span>
         </a>
       ) : (
         <p className="flex gap-2 text-sm text-muted">
           <Lock className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-          {sharedWithDonors
-            ? "The requester shared a document with registered donors. Sign in with a donor account to view it."
-            : "A document was provided. It is private to the requester and moderators."}
+          {sharedWithDonors ? t.requests.document.sharedWithDonors : t.requests.document.private}
         </p>
       )}
     </Card>

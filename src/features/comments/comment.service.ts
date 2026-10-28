@@ -40,7 +40,7 @@ function toView(doc: CommentDoc, authors: Map<string, Author>, replies: CommentV
     id: doc._id.toHexString(),
     parentId: doc.parentId?.toHexString() ?? null,
     authorId: doc.authorId.toHexString(),
-    authorName: author?.name ?? "Former member",
+    authorName: author?.name ?? "formerMember",
     authorAvatar: author?.avatar ?? null,
     content: doc.deletedAt ? null : doc.content,
     createdAt: doc.createdAt.toISOString(),

@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarClock, CircleAlert, CircleCheck, Minus, Plus, Siren, type LucideIcon } from "lucide-react";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import {
   Controller,
   useWatch,
@@ -17,6 +17,8 @@ import { Checkbox, Field, Input, Textarea, describedBy } from "@/components/ui/f
 import { BLOOD_GROUPS } from "@/lib/constants/blood-groups";
 import { DISTRICTS } from "@/lib/constants/locations";
 import { LIMITS, type Urgency } from "@/lib/constants/site";
+import { formatNumber, interpolate, translate } from "@/lib/i18n/format";
+import { useLocale, useT } from "@/lib/i18n/locale-context";
 import { cn } from "@/lib/utils/cn";
 import type { BloodRequestInput, BloodRequestValues } from "@/lib/validators/request";
 import { useBloodRequestForm } from "../hooks/use-blood-request-form";
@@ -24,8 +26,6 @@ import { PrescriptionUpload } from "./prescription-upload";
 
 type FormControl = Control<BloodRequestInput, unknown, BloodRequestValues>;
 type Register = UseFormRegister<BloodRequestInput>;
-
-const DISTRICT_OPTIONS = DISTRICTS.map((d) => ({ value: d.name, label: d.name, hint: d.division }));
 
 // cn() doesn't merge conflicting utilities, so the border colour is passed separately.
 const choiceClasses = (invalid: boolean) =>
@@ -36,14 +36,31 @@ const choiceClasses = (invalid: boolean) =>
 
 /** The patient-side "Post a blood request" form. All logic lives in useBloodRequestForm. */
 export function BloodRequestForm({ viewerName }: { viewerName: string }) {
+  const { lang, t } = useLocale();
+  const copy = t.requestForm;
   const { form, onSubmit, onKeyDown, isPending, serverError, submitted, upload, dateRange } =
     useBloodRequestForm();
   const { register, control, setValue, formState } = form;
   const { errors } = formState;
 
+  // Labels follow the language; the stored value stays the English district name.
+  const districtOptions = useMemo(
+    () =>
+      DISTRICTS.map((d) => ({
+        value: d.name,
+        label: t.geo.districts[d.name],
+        hint: t.geo.divisions[d.division],
+      })),
+    [t],
+  );
+
   if (submitted) return <SuccessPanel />;
 
-  const documentError = upload.state.status === "error" ? upload.state.message : errors.documentKey?.message;
+  // Schema and server errors arrive as message keys; translate them here.
+  const message = (key?: string) => (key ? translate(t.feedback, key) : undefined);
+  const documentError =
+    upload.state.status === "error" ? upload.state.message : message(errors.documentKey?.message);
+  const [beforeName, afterName = ""] = copy.postingAs.split("{name}");
 
   return (
     <form
@@ -54,12 +71,13 @@ export function BloodRequestForm({ viewerName }: { viewerName: string }) {
       aria-busy={isPending || undefined}
     >
       <p className="text-sm text-muted">
-        Posting as <span className="font-medium text-foreground">{viewerName}</span>. Everything except the
-        optional fields is required.
+        {beforeName}
+        <span className="font-medium text-foreground">{viewerName}</span>
+        {afterName} {copy.requiredNote}
       </p>
 
-      <Section title="Blood needed">
-        <ChoiceGroup id="bloodGroup" legend="Blood group" error={errors.bloodGroup?.message}>
+      <Section title={copy.sections.blood}>
+        <ChoiceGroup id="bloodGroup" legend={copy.bloodGroup} error={message(errors.bloodGroup?.message)}>
           <div className="grid grid-cols-4 gap-2 sm:gap-3">
             {BLOOD_GROUPS.map((group) => (
               <label
@@ -81,13 +99,13 @@ export function BloodRequestForm({ viewerName }: { viewerName: string }) {
             control={control}
             register={register}
             setValue={setValue}
-            error={errors.units?.message}
+            error={message(errors.units?.message)}
           />
           <Field
             id="neededDate"
-            label="Required date"
-            error={errors.neededDate?.message}
-            hint={`Today or within the next ${LIMITS.maxDaysAhead} days`}
+            label={copy.neededDate.label}
+            error={message(errors.neededDate?.message)}
+            hint={interpolate(copy.neededDate.hint, { days: formatNumber(LIMITS.maxDaysAhead, lang) })}
           >
             <Input
               id="neededDate"
@@ -101,16 +119,16 @@ export function BloodRequestForm({ viewerName }: { viewerName: string }) {
           </Field>
         </div>
 
-        <UrgencyPicker register={register} error={errors.urgency?.message} />
+        <UrgencyPicker register={register} error={message(errors.urgency?.message)} />
       </Section>
 
-      <Section title="Hospital & contact">
-        <Field id="hospitalName" label="Hospital / institute name" error={errors.hospitalName?.message}>
+      <Section title={copy.sections.hospital}>
+        <Field id="hospitalName" label={copy.hospital.label} error={message(errors.hospitalName?.message)}>
           <Input
             id="hospitalName"
             autoCapitalize="words"
             enterKeyHint="next"
-            placeholder="e.g. Dhaka Medical College Hospital"
+            placeholder={copy.hospital.placeholder}
             aria-invalid={errors.hospitalName ? true : undefined}
             aria-describedby={describedBy("hospitalName", errors.hospitalName?.message)}
             {...register("hospitalName")}
@@ -122,7 +140,12 @@ export function BloodRequestForm({ viewerName }: { viewerName: string }) {
             control={control}
             name="district"
             render={({ field, fieldState }) => (
-              <Field id="district" label="District" error={fieldState.error?.message} hint="Type to search">
+              <Field
+                id="district"
+                label={copy.district.label}
+                error={message(fieldState.error?.message)}
+                hint={copy.district.hint}
+              >
                 {/* Combobox has no ref prop; hand RHF its input so focus-on-error works. */}
                 <div ref={(el) => field.ref(el?.querySelector("input") ?? null)}>
                   <Combobox
@@ -130,8 +153,8 @@ export function BloodRequestForm({ viewerName }: { viewerName: string }) {
                     value={field.value ?? ""}
                     onChange={field.onChange}
                     onBlur={field.onBlur}
-                    options={DISTRICT_OPTIONS}
-                    placeholder="Search districts…"
+                    options={districtOptions}
+                    placeholder={copy.district.placeholder}
                     invalid={!!fieldState.error}
                     describedBy={describedBy("district", fieldState.error?.message, true)}
                   />
@@ -141,9 +164,9 @@ export function BloodRequestForm({ viewerName }: { viewerName: string }) {
           />
           <Field
             id="contactPhone"
-            label="Contact phone"
-            error={errors.contactPhone?.message}
-            hint="Only shown to signed-in donors if you allow it"
+            label={copy.phone.label}
+            error={message(errors.contactPhone?.message)}
+            hint={copy.phone.hint}
           >
             <Input
               id="contactPhone"
@@ -151,7 +174,7 @@ export function BloodRequestForm({ viewerName }: { viewerName: string }) {
               inputMode="tel"
               autoComplete="tel"
               enterKeyHint="next"
-              placeholder="01XXXXXXXXX"
+              placeholder={copy.phone.placeholder}
               aria-invalid={errors.contactPhone ? true : undefined}
               aria-describedby={describedBy("contactPhone", errors.contactPhone?.message, true)}
               {...register("contactPhone")}
@@ -161,21 +184,25 @@ export function BloodRequestForm({ viewerName }: { viewerName: string }) {
 
         <Checkbox
           id="allowPhoneReveal"
-          label="Let signed-in donors see my phone number"
-          description="If you turn this off, donors can still reply in the request's comments."
+          label={copy.allowPhone.label}
+          description={copy.allowPhone.description}
           {...register("allowPhoneReveal")}
         />
       </Section>
 
-      <Section title="More details">
-        <DescriptionField control={control} register={register} error={errors.description?.message} />
+      <Section title={copy.sections.details}>
+        <DescriptionField
+          control={control}
+          register={register}
+          error={message(errors.description?.message)}
+        />
 
         <Field
           id="document"
-          label="Prescription or hospital document"
+          label={copy.document.label}
           optional
           error={documentError}
-          hint="Optional, but encouraged: it helps moderators verify the request. It stays private unless you choose to share it."
+          hint={copy.document.hint}
         >
           <PrescriptionUpload
             id="document"
@@ -187,9 +214,9 @@ export function BloodRequestForm({ viewerName }: { viewerName: string }) {
 
         <Checkbox
           id="shareDocumentWithDonors"
-          label="Let signed-in donors view the document"
+          label={copy.document.shareLabel}
           description={
-            upload.state.status === "done" ? "Moderators can always see it." : "Upload a document first."
+            upload.state.status === "done" ? copy.document.shareReady : copy.document.shareNeedsUpload
           }
           disabled={upload.state.status !== "done"}
           className="has-disabled:cursor-not-allowed has-disabled:opacity-60"
@@ -211,9 +238,7 @@ export function BloodRequestForm({ viewerName }: { viewerName: string }) {
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted" aria-live="polite">
-          {upload.isUploading
-            ? "Wait for the document to finish uploading."
-            : "A moderator reviews every request before it goes live."}
+          {upload.isUploading ? copy.footer.uploading : copy.footer.review}
         </p>
         <Button
           type="submit"
@@ -222,7 +247,7 @@ export function BloodRequestForm({ viewerName }: { viewerName: string }) {
           disabled={upload.isUploading}
           className="w-full sm:w-auto"
         >
-          {isPending ? "Submitting…" : "Submit request"}
+          {isPending ? copy.submitting : copy.submit}
         </Button>
       </div>
     </form>
@@ -268,21 +293,18 @@ function ChoiceGroup({
   );
 }
 
-const URGENCY_OPTIONS: { value: Urgency; label: string; description: string; icon: LucideIcon }[] = [
-  { value: "urgent", label: "Urgent", description: "Needed as soon as possible", icon: Siren },
-  {
-    value: "normal",
-    label: "Normal",
-    description: "Planned, with time to arrange donors",
-    icon: CalendarClock,
-  },
+/** Option order and icons only; the text comes from requestForm.urgency.options. */
+const URGENCY_OPTIONS: { value: Urgency; icon: LucideIcon }[] = [
+  { value: "urgent", icon: Siren },
+  { value: "normal", icon: CalendarClock },
 ];
 
 function UrgencyPicker({ register, error }: { register: Register; error?: string }) {
+  const copy = useT().requestForm.urgency;
   return (
-    <ChoiceGroup id="urgency" legend="Urgency" error={error}>
+    <ChoiceGroup id="urgency" legend={copy.label} error={error}>
       <div className="grid gap-3 sm:grid-cols-2">
-        {URGENCY_OPTIONS.map(({ value, label, description, icon: Icon }) => (
+        {URGENCY_OPTIONS.map(({ value, icon: Icon }) => (
           <label
             key={value}
             className={cn(
@@ -304,8 +326,10 @@ function UrgencyPicker({ register, error }: { register: Register; error?: string
               aria-hidden="true"
             />
             <span className="flex flex-col">
-              <span className={cn("font-medium", value === "urgent" && "text-brand-bright")}>{label}</span>
-              <span className="text-xs text-muted">{description}</span>
+              <span className={cn("font-medium", value === "urgent" && "text-brand-bright")}>
+                {copy.options[value].label}
+              </span>
+              <span className="text-xs text-muted">{copy.options[value].hint}</span>
             </span>
           </label>
         ))}
@@ -325,6 +349,8 @@ function UnitsStepper({
   setValue: UseFormSetValue<BloodRequestInput>;
   error?: string;
 }) {
+  const { lang, t } = useLocale();
+  const copy = t.requestForm.units;
   const current = Number(useWatch({ control, name: "units" })) || 0;
   const step = (delta: number) =>
     setValue("units", Math.min(LIMITS.maxUnits, Math.max(1, current + delta)), {
@@ -335,7 +361,12 @@ function UnitsStepper({
     "grid size-11 shrink-0 place-items-center rounded-button border border-outline bg-surface text-foreground transition-colors hover:border-muted/60 disabled:opacity-40";
 
   return (
-    <Field id="units" label="Units (bags)" error={error} hint={`1 to ${LIMITS.maxUnits}`}>
+    <Field
+      id="units"
+      label={copy.label}
+      error={error}
+      hint={interpolate(copy.hint, { min: formatNumber(1, lang), max: formatNumber(LIMITS.maxUnits, lang) })}
+    >
       <div className="flex items-center gap-2">
         <button
           type="button"
@@ -345,7 +376,7 @@ function UnitsStepper({
           aria-controls="units"
         >
           <Minus className="size-4" aria-hidden="true" />
-          <span className="sr-only">Fewer units</span>
+          <span className="sr-only">{copy.fewer}</span>
         </button>
         <Input
           id="units"
@@ -368,7 +399,7 @@ function UnitsStepper({
           aria-controls="units"
         >
           <Plus className="size-4" aria-hidden="true" />
-          <span className="sr-only">More units</span>
+          <span className="sr-only">{copy.more}</span>
         </button>
       </div>
     </Field>
@@ -384,18 +415,14 @@ function DescriptionField({
   register: Register;
   error?: string;
 }) {
+  const { lang, t } = useLocale();
+  const copy = t.requestForm.description;
   const length = (useWatch({ control, name: "description" }) ?? "").length;
   const max = LIMITS.descriptionMaxLength;
   const errorOrHint = describedBy("description", error, true);
 
   return (
-    <Field
-      id="description"
-      label="Short description"
-      optional
-      error={error}
-      hint="Patient's condition, ward or bed number, who to ask for at the hospital."
-    >
+    <Field id="description" label={copy.label} optional error={error} hint={copy.hint}>
       <Textarea
         id="description"
         rows={4}
@@ -411,13 +438,14 @@ function DescriptionField({
           length >= max * 0.9 ? "text-warning" : "text-muted",
         )}
       >
-        {length}/{max} characters
+        {interpolate(copy.counter, { count: formatNumber(length, lang), max: formatNumber(max, lang) })}
       </p>
     </Field>
   );
 }
 
 function SuccessPanel() {
+  const copy = useT().requestForm.success;
   const headingRef = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
     headingRef.current?.focus();
@@ -429,17 +457,13 @@ function SuccessPanel() {
         <CircleCheck className="size-7" aria-hidden="true" />
       </span>
       <h2 ref={headingRef} tabIndex={-1} className="text-2xl font-semibold tracking-tight focus:outline-none">
-        Request submitted — waiting for review
+        {copy.title}
       </h2>
-      <p className="max-w-md text-muted">
-        A moderator will check the details before your request goes live. Once it&apos;s approved, it appears
-        on BloodLink and matching donors are notified by email and on our private Telegram channel. You can
-        follow its status from your account.
-      </p>
+      <p className="max-w-md text-muted">{copy.body}</p>
       <div className="mt-2 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-        <ButtonLink href="/account">View my requests</ButtonLink>
+        <ButtonLink href="/account">{copy.myRequests}</ButtonLink>
         <ButtonLink href="/requests" variant="secondary">
-          Browse requests
+          {copy.browse}
         </ButtonLink>
       </div>
     </Card>

@@ -1,5 +1,5 @@
-import Link from "next/link";
 import type { ComponentProps } from "react";
+import { LocalizedLink } from "@/lib/i18n/localized-link";
 import { cn } from "@/lib/utils/cn";
 import { Spinner } from "./spinner";
 
@@ -56,11 +56,12 @@ export function Button({
   );
 }
 
-interface ButtonLinkProps extends ComponentProps<typeof Link> {
+interface ButtonLinkProps extends ComponentProps<typeof LocalizedLink> {
   variant?: Variant;
   size?: Size;
 }
 
+/** A link styled as a button. Paths are unprefixed (`/requests`); the language prefix is added for you. */
 export function ButtonLink({ variant, size, className, ...props }: ButtonLinkProps) {
-  return <Link className={buttonClasses(variant, size, className)} {...props} />;
+  return <LocalizedLink className={buttonClasses(variant, size, className)} {...props} />;
 }

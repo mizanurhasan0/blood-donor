@@ -31,7 +31,7 @@ describe("validateDocument", () => {
   it("rejects a declared type that does not match the contents", () => {
     expect(validateDocument(file(PNG), "image/jpeg")).toEqual({
       ok: false,
-      error: "The file type does not match its contents.",
+      error: "fileTypeMismatch",
     });
     expect(validateDocument(file(PDF), "image/png").ok).toBe(false);
   });
@@ -44,14 +44,14 @@ describe("validateDocument", () => {
   ])("rejects %s", (_label, header, type) => {
     expect(validateDocument(file(header), type)).toEqual({
       ok: false,
-      error: "Upload a JPG, PNG, WEBP or PDF file.",
+      error: "fileTypeInvalid",
     });
   });
 
   it("rejects empty files", () => {
     expect(validateDocument(new Uint8Array(0), "image/png")).toEqual({
       ok: false,
-      error: "The file is empty.",
+      error: "fileEmpty",
     });
   });
 
@@ -59,7 +59,7 @@ describe("validateDocument", () => {
     expect(validateDocument(file(PNG, FIVE_MB), "image/png").ok).toBe(true);
     expect(validateDocument(file(PNG, FIVE_MB + 1), "image/png")).toEqual({
       ok: false,
-      error: "The file is larger than 5 MB.",
+      error: "documentTooLarge",
     });
   });
 });

@@ -8,13 +8,6 @@ export const SITE = {
   url: (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/$/, ""),
 } as const;
 
-export const NAV_LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/requests", label: "Blood Requests" },
-  { href: "/become-donor", label: "Become Donor" },
-  { href: "/how-it-works", label: "How It Works" },
-] as const;
-
 export const REQUEST_STATUSES = ["pending", "published", "fulfilled", "expired", "rejected"] as const;
 export type RequestStatus = (typeof REQUEST_STATUSES)[number];
 

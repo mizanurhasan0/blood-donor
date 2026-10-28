@@ -45,21 +45,17 @@ describe("donorProfileSchema", () => {
   });
 
   it("rejects an invalid phone number", () => {
-    expect(errorsOf(donorProfileSchema, { ...valid, phone: "12345" }).phone).toEqual([
-      "Enter a valid Bangladeshi mobile number",
-    ]);
+    expect(errorsOf(donorProfileSchema, { ...valid, phone: "12345" }).phone).toEqual(["phoneInvalid"]);
   });
 
   it("bounds the name and area lengths", () => {
     expect(errorsOf(donorProfileSchema, { ...valid, fullName: " A " }).fullName).toEqual([
-      "Enter your full name",
+      "fullNameRequired",
     ]);
     expect(errorsOf(donorProfileSchema, { ...valid, fullName: "A".repeat(81) }).fullName).toEqual([
-      "Keep it under 80 characters",
+      "fullNameTooLong",
     ]);
-    expect(errorsOf(donorProfileSchema, { ...valid, area: "x".repeat(81) }).area).toEqual([
-      "Keep it under 80 characters",
-    ]);
+    expect(errorsOf(donorProfileSchema, { ...valid, area: "x".repeat(81) }).area).toEqual(["areaTooLong"]);
   });
 
   it("requires real booleans for the consent flags", () => {
@@ -74,8 +70,8 @@ describe("donorProfileSchema", () => {
 
   it("rejects unknown blood groups and districts", () => {
     const errors = errorsOf(donorProfileSchema, { ...valid, bloodGroup: "B", district: "dhaka" });
-    expect(errors.bloodGroup).toEqual(["Select a blood group"]);
-    expect(errors.district).toEqual(["Select a district"]);
+    expect(errors.bloodGroup).toEqual(["bloodGroupRequired"]);
+    expect(errors.district).toEqual(["districtRequired"]);
   });
 });
 

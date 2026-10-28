@@ -6,7 +6,8 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/api/", "/account", "/admin/", "/request/new", "/login", "/unsubscribe"],
+      // Private pages exist under both language prefixes (/bn/... and /en/...), so match any prefix.
+      disallow: ["/api/", "/*/account", "/*/admin", "/*/request/new", "/*/login", "/*/unsubscribe"],
     },
     sitemap: `${SITE.url}/sitemap.xml`,
   };

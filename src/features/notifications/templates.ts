@@ -1,6 +1,11 @@
 import type { BloodGroup } from "@/lib/constants/blood-groups";
 import { SITE, type Urgency } from "@/lib/constants/site";
-import { formatLongDate } from "@/lib/utils/dates";
+import { formatDate, formatNumber, interpolate } from "@/lib/i18n/format";
+import { bn as geoBn } from "@/lib/i18n/messages/geo";
+import { bn as notifyBn } from "@/lib/i18n/messages/notify";
+
+/** Recipients get Bangla. Email and Telegram text always use the bn copy. */
+const copy = notifyBn;
 
 export interface NotifiableRequest {
   id: string;
@@ -18,7 +23,16 @@ export function escapeHtml(value: string): string {
 }
 
 export function requestUrl(id: string): string {
-  return `${SITE.url}/requests/${id}`;
+  return `${SITE.url}/bn/requests/${id}`;
+}
+
+/** District names are stored in English and shown in Bangla. */
+function districtName(district: string): string {
+  return (geoBn.districts as Record<string, string>)[district] ?? district;
+}
+
+function neededDate(date: Date): string {
+  return formatDate(date, "bn", "long");
 }
 
 function summary(description: string): string {
@@ -27,7 +41,8 @@ function summary(description: string): string {
 }
 
 export function emailSubject(r: NotifiableRequest): string {
-  return `${r.urgency === "urgent" ? "Urgent: " : ""}Blood Needed: ${r.bloodGroup} in ${r.district}`;
+  const template = r.urgency === "urgent" ? copy.emailSubjectUrgent : copy.emailSubject;
+  return interpolate(template, { bloodGroup: r.bloodGroup, district: districtName(r.district) });
 }
 
 /**
@@ -36,33 +51,38 @@ export function emailSubject(r: NotifiableRequest): string {
  */
 export function emailBody(r: NotifiableRequest, recipientName: string, unsubscribeUrl: string) {
   const rows: [string, string][] = [
-    ["Blood group", r.bloodGroup],
-    ["Hospital", r.hospitalName],
-    ["District", r.district],
-    ["Needed by", formatLongDate(r.neededAt)],
-    ["Units needed", String(r.units)],
+    [copy.labelBloodGroup, r.bloodGroup],
+    [copy.labelHospital, r.hospitalName],
+    [copy.labelDistrict, districtName(r.district)],
+    [copy.labelNeededBy, neededDate(r.neededAt)],
+    [copy.labelUnits, formatNumber(r.units, "bn")],
   ];
   const url = requestUrl(r.id);
   const note = summary(r.description);
+  const urgent = r.urgency === "urgent";
 
   const text = [
-    `Hi ${recipientName},`,
+    interpolate(copy.emailGreeting, { name: recipientName }),
     "",
-    `Someone near you needs ${r.bloodGroup} blood.`,
+    interpolate(copy.emailLead, { bloodGroup: r.bloodGroup }),
     ...rows.map(([k, v]) => `${k}: ${v}`),
     note ? `\n${note}` : "",
     "",
-    `View the request: ${url}`,
+    interpolate(copy.emailViewRequest, { url }),
     "",
-    "Blood group matching only finds potential volunteers. Medical staff decide donation eligibility and compatibility.",
-    `Stop these emails: ${unsubscribeUrl}`,
+    copy.safetyNotice,
+    interpolate(copy.emailUnsubscribeText, { url: unsubscribeUrl }),
   ].join("\n");
 
-  const html = `<!doctype html><html><body style="margin:0;background:#06121d;font-family:Arial,sans-serif;color:#f8fafc">
+  const leadHtml = interpolate(urgent ? copy.emailLeadUrgent : copy.emailLead, {
+    bloodGroup: `<strong style="color:#ff2442">${r.bloodGroup}</strong>`,
+  });
+
+  const html = `<!doctype html><html lang="bn"><body style="margin:0;background:#06121d;font-family:'Noto Sans Bengali','Nirmala UI',Vrinda,Arial,sans-serif;color:#f8fafc">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#102635;border:1px solid #243b4c;border-radius:16px;padding:28px">
 <tr><td style="font-size:20px;font-weight:bold;padding-bottom:4px">Blood<span style="color:#ff2442">Link</span></td></tr>
-<tr><td style="font-size:15px;color:#a7b7c8;padding-bottom:20px">Hi ${escapeHtml(recipientName)}, someone near you needs <strong style="color:#ff2442">${r.bloodGroup}</strong> blood${r.urgency === "urgent" ? " urgently" : ""}.</td></tr>
+<tr><td style="font-size:15px;color:#a7b7c8;padding-bottom:20px">${interpolate(copy.emailGreeting, { name: escapeHtml(recipientName) })} ${leadHtml}</td></tr>
 ${rows
   .map(
     ([k, v]) =>
@@ -70,8 +90,8 @@ ${rows
   )
   .join("")}
 ${note ? `<tr><td style="padding:14px 0 0;font-size:14px;color:#a7b7c8">${escapeHtml(note)}</td></tr>` : ""}
-<tr><td style="padding:24px 0"><a href="${url}" style="display:inline-block;background:#ff2442;color:#f8fafc;text-decoration:none;font-weight:bold;padding:12px 24px;border-radius:999px">View Request</a></td></tr>
-<tr><td style="font-size:12px;color:#a7b7c8;line-height:1.5">Blood group matching only finds potential volunteers. Final screening, compatibility testing and donation eligibility are decided by medical staff. Never pay or accept payment for blood.<br><br><a href="${unsubscribeUrl}" style="color:#a7b7c8">Stop these emails</a></td></tr>
+<tr><td style="padding:24px 0"><a href="${url}" style="display:inline-block;background:#ff2442;color:#f8fafc;text-decoration:none;font-weight:bold;padding:12px 24px;border-radius:999px">${copy.emailViewButton}</a></td></tr>
+<tr><td style="font-size:12px;color:#a7b7c8;line-height:1.5">${copy.safetyNotice}<br><br><a href="${unsubscribeUrl}" style="color:#a7b7c8">${copy.emailUnsubscribeLink}</a></td></tr>
 </table></td></tr></table></body></html>`;
 
   return { html, text };
@@ -80,14 +100,14 @@ ${note ? `<tr><td style="padding:14px 0 0;font-size:14px;color:#a7b7c8">${escape
 /** Telegram HTML message. Contains no contact details or documents. */
 export function telegramMessage(r: NotifiableRequest): string {
   const lines = [
-    `🩸 <b>${r.bloodGroup} BLOOD NEEDED</b>${r.urgency === "urgent" ? " · URGENT" : ""}`,
+    `🩸 <b>${interpolate(copy.telegramTitle, { bloodGroup: r.bloodGroup })}</b>${r.urgency === "urgent" ? copy.telegramUrgent : ""}`,
     "",
-    `Hospital: ${escapeHtml(r.hospitalName)}`,
-    `District: ${escapeHtml(r.district)}`,
-    `Units: ${r.units}`,
-    `Needed: ${formatLongDate(r.neededAt)}`,
+    `${copy.labelHospital}: ${escapeHtml(r.hospitalName)}`,
+    `${copy.labelDistrict}: ${escapeHtml(districtName(r.district))}`,
+    `${copy.labelUnits}: ${formatNumber(r.units, "bn")}`,
+    `${copy.labelNeededBy}: ${neededDate(r.neededAt)}`,
     "",
-    "View Request:",
+    copy.telegramViewRequest,
     requestUrl(r.id),
   ];
   return lines.join("\n");

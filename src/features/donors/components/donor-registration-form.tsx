@@ -1,7 +1,7 @@
 "use client";
 
 import { CircleCheck, Pencil } from "lucide-react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Controller, useWatch } from "react-hook-form";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -9,11 +9,11 @@ import { Combobox } from "@/components/ui/combobox";
 import { Checkbox, Field, Input, describedBy } from "@/components/ui/field";
 import { BLOOD_GROUPS } from "@/lib/constants/blood-groups";
 import { DISTRICTS, divisionOf, isDistrict } from "@/lib/constants/locations";
+import { formatNumber, interpolate, translate } from "@/lib/i18n/format";
+import { useLocale, useT } from "@/lib/i18n/locale-context";
 import { cn } from "@/lib/utils/cn";
 import type { DonorProfileInput } from "@/lib/validators/donor";
 import { useDonorRegistration } from "../hooks/use-donor-registration";
-
-const DISTRICT_OPTIONS = DISTRICTS.map((d) => ({ value: d.name, label: d.name, hint: d.division }));
 
 interface DonorRegistrationFormProps {
   mode?: "register" | "edit";
@@ -34,6 +34,7 @@ export function DonorRegistrationForm({
   onSaved,
   onCancel,
 }: DonorRegistrationFormProps) {
+  const { lang, t } = useLocale();
   const { form, onSubmit, isPending, formError, saved } = useDonorRegistration(initialValues, onSaved);
   const { register, control, formState, setFocus } = form;
   const { errors } = formState;
@@ -41,30 +42,32 @@ export function DonorRegistrationForm({
   const [registeredOnMount] = useState(registered);
   const district = useWatch({ control, name: "district" });
   const division = isDistrict(district) ? divisionOf(district) : null;
+  const districtOptions = useMemo(
+    () =>
+      DISTRICTS.map((d) => ({
+        value: d.name,
+        label: t.geo.districts[d.name],
+        hint: t.geo.divisions[d.division],
+      })),
+    [t],
+  );
+  const copy = t.donor.form;
+  /** Field errors are validation keys from the schema, shown in the visitor's language. */
+  const fieldError = (message?: string) => (message ? translate(t.feedback, message) : undefined);
 
   useEffect(() => {
     if (mode === "edit") setFocus("fullName");
   }, [mode, setFocus]);
 
   if (mode === "register" && registeredOnMount) {
-    return (
-      <RegisteredView
-        title="You're already registered"
-        description="Your donor profile is active. Update your details or alert settings from your account."
-        telegram={telegram}
-      />
-    );
+    return <RegisteredView title={copy.alreadyTitle} description={copy.alreadyText} telegram={telegram} />;
   }
   if (mode === "register" && (saved || registered)) {
     return (
       <RegisteredView
         announce
-        title="You're registered as a donor"
-        description={
-          form.getValues("emailNotifications")
-            ? "Thank you. We'll email you when an approved request near you needs your blood group."
-            : "Thank you. Email alerts are off; you can turn them on from your account at any time."
-        }
+        title={copy.registeredTitle}
+        description={form.getValues("emailNotifications") ? copy.registeredEmailOn : copy.registeredEmailOff}
         telegram={telegram}
       />
     );
@@ -72,7 +75,7 @@ export function DonorRegistrationForm({
 
   const body = (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
-      <Field id="donor-name" label="Full name" error={errors.fullName?.message}>
+      <Field id="donor-name" label={copy.fullName} error={fieldError(errors.fullName?.message)}>
         <Input
           id="donor-name"
           autoComplete="name"
@@ -83,7 +86,7 @@ export function DonorRegistrationForm({
       </Field>
 
       <fieldset>
-        <legend className="text-sm font-medium">Blood group</legend>
+        <legend className="text-sm font-medium">{copy.bloodGroup}</legend>
         <div className="mt-2 grid grid-cols-4 gap-2">
           {BLOOD_GROUPS.map((group) => (
             <label key={group} className="cursor-pointer">
@@ -102,7 +105,7 @@ export function DonorRegistrationForm({
         </div>
         {errors.bloodGroup && (
           <p id="donor-group-error" role="alert" className="mt-1.5 text-sm text-brand-bright">
-            {errors.bloodGroup.message}
+            {fieldError(errors.bloodGroup.message)}
           </p>
         )}
       </fieldset>
@@ -110,9 +113,9 @@ export function DonorRegistrationForm({
       <div className="grid gap-6 sm:grid-cols-[minmax(0,1fr)_11rem]">
         <Field
           id="donor-district"
-          label="District"
-          error={errors.district?.message}
-          hint="Search all 64 districts."
+          label={copy.district}
+          error={fieldError(errors.district?.message)}
+          hint={interpolate(copy.districtHint, { count: formatNumber(DISTRICTS.length, lang) })}
         >
           <Controller
             control={control}
@@ -123,8 +126,8 @@ export function DonorRegistrationForm({
                 value={field.value ?? ""}
                 onChange={field.onChange}
                 onBlur={field.onBlur}
-                options={DISTRICT_OPTIONS}
-                placeholder="Search your district"
+                options={districtOptions}
+                placeholder={copy.districtPlaceholder}
                 invalid={fieldState.invalid}
                 describedBy={describedBy("donor-district", fieldState.error?.message, true)}
               />
@@ -133,14 +136,14 @@ export function DonorRegistrationForm({
         </Field>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="donor-division" className="text-sm font-medium">
-            Division
+            {copy.division}
           </label>
           <output
             id="donor-division"
             htmlFor="donor-district"
             className="flex min-h-11 items-center rounded-button border border-dashed border-outline px-3.5 text-sm text-muted"
           >
-            {division ?? "Set from district"}
+            {division ? t.geo.divisions[division] : copy.divisionAuto}
           </output>
         </div>
       </div>
@@ -148,14 +151,14 @@ export function DonorRegistrationForm({
       <div className="grid gap-6 sm:grid-cols-2">
         <Field
           id="donor-area"
-          label="Area"
+          label={copy.area}
           optional
-          error={errors.area?.message}
-          hint="Neighbourhood or upazila."
+          error={fieldError(errors.area?.message)}
+          hint={copy.areaHint}
         >
           <Input
             id="donor-area"
-            placeholder="e.g. Mirpur"
+            placeholder={copy.areaPlaceholder}
             autoComplete="address-level3"
             aria-invalid={errors.area ? true : undefined}
             aria-describedby={describedBy("donor-area", errors.area?.message, true)}
@@ -164,17 +167,17 @@ export function DonorRegistrationForm({
         </Field>
         <Field
           id="donor-phone"
-          label="Mobile number"
+          label={copy.phone}
           optional
-          error={errors.phone?.message}
-          hint="Kept private. Never shown publicly. Not verified."
+          error={fieldError(errors.phone?.message)}
+          hint={copy.phoneHint}
         >
           <Input
             id="donor-phone"
             type="tel"
             inputMode="tel"
             autoComplete="tel-national"
-            placeholder="01XXXXXXXXX"
+            placeholder={copy.phonePlaceholder}
             aria-invalid={errors.phone ? true : undefined}
             aria-describedby={describedBy("donor-phone", errors.phone?.message, true)}
             {...register("phone")}
@@ -186,33 +189,33 @@ export function DonorRegistrationForm({
         <Checkbox
           id="donor-available"
           className="min-h-11"
-          label="I'm available to donate now"
-          description="Turn this off after donating or while you can't donate. Alerts only go to available donors."
+          label={copy.available}
+          description={copy.availableHint}
           {...register("available")}
         />
         <Checkbox
           id="donor-email"
           className="min-h-11"
-          label="Email me when someone near me needs my blood group"
-          description="Only for approved requests in your district or division. Stop any time from your account or any alert email."
+          label={copy.emailOptIn}
+          description={copy.emailOptInHint}
           {...register("emailNotifications")}
         />
       </div>
 
       {formError && (
         <p role="alert" className="rounded-button border border-brand/40 bg-brand/10 px-4 py-3 text-sm">
-          {formError}
+          {translate(t.feedback, formError)}
         </p>
       )}
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-end">
         {onCancel && (
           <Button variant="ghost" onClick={onCancel} disabled={isPending}>
-            Cancel
+            {t.common.cancel}
           </Button>
         )}
         <Button type="submit" size="lg" pending={isPending}>
-          {mode === "edit" ? "Save changes" : "Register as donor"}
+          {mode === "edit" ? copy.saveChanges : copy.register}
         </Button>
       </div>
     </form>
@@ -222,10 +225,8 @@ export function DonorRegistrationForm({
   return (
     <Card className="flex flex-col gap-6 p-5 sm:p-8">
       <div className="flex flex-col gap-1.5">
-        <h2 className="text-xl font-semibold">Your donor details</h2>
-        <p className="text-sm text-muted">
-          Takes about a minute. You can edit or delete your profile at any time.
-        </p>
+        <h2 className="text-xl font-semibold">{copy.title}</h2>
+        <p className="text-sm text-muted">{copy.intro}</p>
       </div>
       {body}
     </Card>
@@ -243,6 +244,7 @@ function RegisteredView({
   telegram?: ReactNode;
   announce?: boolean;
 }) {
+  const t = useT();
   const heading = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
@@ -263,9 +265,9 @@ function RegisteredView({
         </h2>
         <p className="max-w-md text-sm text-muted">{description}</p>
         <div className="mt-2 flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-          <ButtonLink href="/requests">See blood requests</ButtonLink>
+          <ButtonLink href="/requests">{t.donor.form.seeRequests}</ButtonLink>
           <ButtonLink href="/account" variant="secondary">
-            Manage my profile
+            {t.donor.form.manageProfile}
           </ButtonLink>
         </div>
       </Card>
@@ -282,6 +284,7 @@ export function DonorProfileEditor({
   card: ReactNode;
   initialValues: DonorProfileInput;
 }) {
+  const { t } = useLocale();
   const [editing, setEditing] = useState(false);
   const [notice, setNotice] = useState("");
   const editButton = useRef<HTMLButtonElement>(null);
@@ -296,7 +299,7 @@ export function DonorProfileEditor({
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 id="profile-heading" className="text-xl font-semibold">
-          Donor profile
+          {t.account.donorProfile}
         </h2>
         {!editing && (
           <Button
@@ -308,7 +311,7 @@ export function DonorProfileEditor({
             }}
           >
             <Pencil className="size-4" aria-hidden="true" />
-            Edit profile
+            {t.account.editProfile}
           </Button>
         )}
       </div>
@@ -322,7 +325,7 @@ export function DonorProfileEditor({
             initialValues={initialValues}
             onSaved={() => {
               setEditing(false);
-              setNotice("Profile updated.");
+              setNotice(t.account.profileUpdated);
             }}
             onCancel={() => setEditing(false)}
           />

@@ -8,6 +8,7 @@ import { AppError, fail, ok, type ActionResult } from "./result";
  * Runs Server Action logic and converts expected failures into an
  * ActionResult the client can display. Unexpected errors are logged and
  * reported generically so internals never leak to the browser.
+ * Every message returned is a feedback key (lib/i18n/messages/feedback.ts).
  */
 export async function runAction<T>(fn: () => Promise<T>, successMessage?: string): Promise<ActionResult<T>> {
   try {
@@ -23,9 +24,9 @@ export async function runAction<T>(fn: () => Promise<T>, successMessage?: string
     }
     if (error instanceof MissingConfigError) {
       console.error(error.message);
-      return fail("This feature isn't configured yet. Please contact the site admin.");
+      return fail("notConfigured");
     }
     console.error("[action] unexpected error", error);
-    return fail("Something went wrong. Please try again.");
+    return fail("somethingWentWrong");
   }
 }

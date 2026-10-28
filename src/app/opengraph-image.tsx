@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { SITE } from "@/lib/constants/site";
 
+// Deliberately English: ImageResponse's built-in font has no Bangla glyphs, so the card text stays in English.
 export const alt = `${SITE.name} — ${SITE.tagline}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";

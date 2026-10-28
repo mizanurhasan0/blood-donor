@@ -4,9 +4,13 @@ import { Flag } from "lucide-react";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/dialog";
+import { translate } from "@/lib/i18n/format";
+import { useT } from "@/lib/i18n/locale-context";
 import { reportRequestAction } from "../actions";
 
 export function ReportRequestButton({ requestId }: { requestId: string }) {
+  const t = useT();
+  const r = t.requests.report;
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -17,8 +21,8 @@ export function ReportRequestButton({ requestId }: { requestId: string }) {
     startTransition(async () => {
       const result = await reportRequestAction(requestId);
       setOpen(false);
-      if (result.ok) setMessage(result.message ?? "Thanks — a moderator will take a look.");
-      else setError(result.error);
+      if (result.ok) setMessage(result.message ? translate(t.feedback, result.message) : r.thanks);
+      else setError(translate(t.feedback, result.error));
     });
   }
 
@@ -30,7 +34,7 @@ export function ReportRequestButton({ requestId }: { requestId: string }) {
       {!message && (
         <Button variant="ghost" onClick={() => setOpen(true)} className="w-full">
           <Flag className="size-4" aria-hidden="true" />
-          Report this request
+          {r.button}
         </Button>
       )}
       {error && (
@@ -41,9 +45,9 @@ export function ReportRequestButton({ requestId }: { requestId: string }) {
       <ConfirmDialog
         open={open}
         onClose={() => !isPending && setOpen(false)}
-        title="Report this request?"
-        description="Report it if it looks fake, asks for money, or shares private details. A moderator will review it."
-        confirmLabel="Report"
+        title={r.confirmTitle}
+        description={r.confirmBody}
+        confirmLabel={r.confirm}
         onConfirm={confirm}
         pending={isPending}
       />

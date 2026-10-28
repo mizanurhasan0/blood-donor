@@ -1,5 +1,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import Link from "next/link";
+import { formatNumber, interpolate } from "@/lib/i18n/format";
+import { LocalizedLink } from "@/lib/i18n/localized-link";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils/cn";
 
 interface PaginationProps {
@@ -28,54 +30,76 @@ function pageWindow(page: number, pageCount: number): (number | "gap")[] {
   return sorted.flatMap((p, i) => (i > 0 && p - sorted[i - 1] > 1 ? ["gap" as const, p] : [p]));
 }
 
-export function Pagination({ page, pageCount, basePath, params }: PaginationProps) {
+export async function Pagination({ page, pageCount, basePath, params }: PaginationProps) {
   if (pageCount <= 1) return null;
-  const href = (p: number) => hrefFor(basePath, params, p);
+  const t = await getDictionary();
+  const lang = await getLocale();
+  const p = t.requests.pagination;
+  const href = (target: number) => hrefFor(basePath, params, target);
 
   return (
-    <nav aria-label="Pagination" className="flex items-center justify-between gap-2 sm:justify-center">
-      <StepLink href={page > 1 ? href(page - 1) : null} direction="prev" />
+    <nav aria-label={p.label} className="flex items-center justify-between gap-2 sm:justify-center">
+      <StepLink
+        href={page > 1 ? href(page - 1) : null}
+        label={p.previous}
+        srPage={p.stepPage}
+        direction="prev"
+      />
       <p className="text-sm text-muted sm:hidden">
-        Page {page} of {pageCount}
+        {interpolate(p.pageOf, { page: formatNumber(page, lang), total: formatNumber(pageCount, lang) })}
       </p>
       <ul className="hidden items-center gap-1 sm:flex">
-        {pageWindow(page, pageCount).map((p, i) =>
-          p === "gap" ? (
+        {pageWindow(page, pageCount).map((item, i) =>
+          item === "gap" ? (
             <li key={`gap-${i}`} aria-hidden="true" className="px-1 text-muted">
               …
             </li>
           ) : (
-            <li key={p}>
-              <Link
-                href={href(p)}
-                aria-current={p === page ? "page" : undefined}
+            <li key={item}>
+              <LocalizedLink
+                href={href(item)}
+                aria-current={item === page ? "page" : undefined}
                 className={cn(
                   itemClasses,
-                  p === page
+                  item === page
                     ? "bg-brand-strong text-foreground"
                     : "text-muted hover:bg-surface hover:text-foreground",
                 )}
               >
-                <span className="sr-only">Page </span>
-                {p}
-              </Link>
+                <span className="sr-only">{p.page} </span>
+                {formatNumber(item, lang)}
+              </LocalizedLink>
             </li>
           ),
         )}
       </ul>
-      <StepLink href={page < pageCount ? href(page + 1) : null} direction="next" />
+      <StepLink
+        href={page < pageCount ? href(page + 1) : null}
+        label={p.next}
+        srPage={p.stepPage}
+        direction="next"
+      />
     </nav>
   );
 }
 
-function StepLink({ href, direction }: { href: string | null; direction: "prev" | "next" }) {
-  const label = direction === "prev" ? "Previous" : "Next";
+function StepLink({
+  href,
+  label,
+  srPage,
+  direction,
+}: {
+  href: string | null;
+  label: string;
+  srPage: string;
+  direction: "prev" | "next";
+}) {
   const Icon = direction === "prev" ? ChevronLeft : ChevronRight;
   const content = (
     <>
       {direction === "prev" && <Icon className="size-4" aria-hidden="true" />}
       {label}
-      <span className="sr-only"> page</span>
+      <span className="sr-only"> {srPage}</span>
       {direction === "next" && <Icon className="size-4" aria-hidden="true" />}
     </>
   );
@@ -88,12 +112,12 @@ function StepLink({ href, direction }: { href: string | null; direction: "prev" 
     );
   }
   return (
-    <Link
+    <LocalizedLink
       href={href}
       rel={direction}
       className={cn(itemClasses, "border border-outline hover:border-muted hover:bg-surface")}
     >
       {content}
-    </Link>
+    </LocalizedLink>
   );
 }

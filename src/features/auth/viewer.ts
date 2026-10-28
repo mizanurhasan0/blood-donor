@@ -6,6 +6,8 @@ import { cache } from "react";
 import type { BloodGroup } from "@/lib/constants/blood-groups";
 import type { District, Division } from "@/lib/constants/locations";
 import type { Role } from "@/lib/db/collections";
+import { getLocale } from "@/lib/i18n/server";
+import { localizedPath } from "@/lib/i18n/paths";
 import { AppError } from "@/lib/utils/result";
 import { findUserById } from "@/features/users/user.repository";
 import { auth } from "./auth";
@@ -78,9 +80,13 @@ export async function requireAdmin(): Promise<Viewer> {
   return viewer;
 }
 
-/** For pages: sends guests to the sign-in page and back again afterwards. */
+/** For pages: sends guests to the sign-in page and back again afterwards, in the same language. */
 export async function requireViewerOrRedirect(returnTo: string): Promise<Viewer> {
   const viewer = await getViewer();
-  if (!viewer) redirect(`/login?callbackUrl=${encodeURIComponent(returnTo)}`);
+  if (!viewer) {
+    const lang = await getLocale();
+    const callback = localizedPath(lang, returnTo);
+    redirect(`${localizedPath(lang, "/login")}?callbackUrl=${encodeURIComponent(callback)}`);
+  }
   return viewer;
 }

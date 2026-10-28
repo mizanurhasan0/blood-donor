@@ -1,7 +1,12 @@
 import { SITE } from "@/lib/constants/site";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
 
-/** Organization + WebSite structured data for the homepage. Built only from site constants. */
-export function SiteJsonLd() {
+/**
+ * Organization + WebSite structured data for the homepage. The description and tagline follow the
+ * current language; the brand name stays "BloodLink" in every language.
+ */
+export async function SiteJsonLd() {
+  const [t, lang] = await Promise.all([getDictionary(), getLocale()]);
   const data = {
     "@context": "https://schema.org",
     "@graph": [
@@ -10,8 +15,8 @@ export function SiteJsonLd() {
         "@id": `${SITE.url}/#organization`,
         name: SITE.name,
         url: SITE.url,
-        description: SITE.description,
-        slogan: SITE.tagline,
+        description: t.common.siteDescription,
+        slogan: t.common.tagline,
         logo: `${SITE.url}/apple-icon`,
         areaServed: { "@type": "Country", name: "Bangladesh" },
       },
@@ -20,8 +25,8 @@ export function SiteJsonLd() {
         "@id": `${SITE.url}/#website`,
         name: SITE.name,
         url: SITE.url,
-        description: SITE.description,
-        inLanguage: "en",
+        description: t.common.siteDescription,
+        inLanguage: lang,
         publisher: { "@id": `${SITE.url}/#organization` },
       },
     ],

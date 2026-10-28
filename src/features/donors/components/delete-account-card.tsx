@@ -5,16 +5,23 @@ import { useState, useTransition, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Field, Input, describedBy } from "@/components/ui/field";
+import { translate } from "@/lib/i18n/format";
+import { useLocale } from "@/lib/i18n/locale-context";
 import { deleteAccountAction } from "../actions";
+import { Rich } from "./rich-text";
 
+/** Typed to confirm. Kept in Latin letters in every language because it is matched literally. */
 const CONFIRM_WORD = "DELETE";
 
 export function DeleteAccountCard() {
+  const { lang, t } = useLocale();
+  const copy = t.donor.deleteAccount;
   const [open, setOpen] = useState(false);
   const [typed, setTyped] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const confirmed = typed.trim() === CONFIRM_WORD;
+  const errorText = error ? translate(t.feedback, error) : null;
 
   function close() {
     setOpen(false);
@@ -27,7 +34,7 @@ export function DeleteAccountCard() {
     setError(null);
     startTransition(async () => {
       // Redirects away on success, so a result only comes back on failure.
-      const result = await deleteAccountAction();
+      const result = await deleteAccountAction(lang);
       if (result && !result.ok) setError(result.error);
     });
   }
@@ -38,40 +45,38 @@ export function DeleteAccountCard() {
       className="rounded-card border border-brand/30 bg-brand/5 p-5 sm:p-6"
     >
       <h2 id="delete-account-heading" className="text-lg font-semibold">
-        Delete account
+        {t.account.deleteAccount}
       </h2>
-      <p className="mt-2 text-sm text-muted">Deleting your account permanently removes:</p>
+      <p className="mt-2 text-sm text-muted">{copy.removesIntro}</p>
       <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted">
-        <li>Your donor profile, alert settings and Telegram link</li>
-        <li>Your blood requests and any documents you uploaded with them</li>
-        <li>The text of your comments on other requests (they show as deleted)</li>
+        {copy.removes.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
       </ul>
-      <p className="mt-3 text-sm font-medium">This can&apos;t be undone.</p>
-      {error && !open && (
+      <p className="mt-3 text-sm font-medium">{copy.irreversible}</p>
+      {errorText && !open && (
         <p role="alert" className="mt-3 text-sm text-brand-bright">
-          {error}
+          {errorText}
         </p>
       )}
       <Button variant="danger" className="mt-4" onClick={() => setOpen(true)}>
         <Trash2 className="size-4" aria-hidden="true" />
-        Delete my account
+        {copy.deleteButton}
       </Button>
 
-      <Dialog
-        open={open}
-        onClose={close}
-        title="Delete your account?"
-        description="Your profile, requests, documents and Telegram link are deleted, and your comments are blanked. This can't be undone."
-      >
+      <Dialog open={open} onClose={close} title={copy.dialogTitle} description={copy.dialogText}>
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <Field
             id="delete-confirm"
             label={
-              <>
-                Type <strong className="font-semibold text-brand-bright">{CONFIRM_WORD}</strong> to confirm
-              </>
+              <Rich
+                text={copy.typeToConfirm}
+                values={{
+                  word: <strong className="font-semibold text-brand-bright">{CONFIRM_WORD}</strong>,
+                }}
+              />
             }
-            error={error ?? undefined}
+            error={errorText ?? undefined}
           >
             <Input
               id="delete-confirm"
@@ -80,16 +85,16 @@ export function DeleteAccountCard() {
               autoComplete="off"
               autoCapitalize="characters"
               spellCheck={false}
-              aria-invalid={error ? true : undefined}
-              aria-describedby={describedBy("delete-confirm", error ?? undefined)}
+              aria-invalid={errorText ? true : undefined}
+              aria-describedby={describedBy("delete-confirm", errorText ?? undefined)}
             />
           </Field>
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="ghost" onClick={close} disabled={isPending}>
-              Cancel
+              {t.common.cancel}
             </Button>
             <Button type="submit" variant="danger" disabled={!confirmed} pending={isPending}>
-              Delete permanently
+              {copy.confirmButton}
             </Button>
           </div>
         </form>

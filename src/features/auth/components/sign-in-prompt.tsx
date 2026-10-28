@@ -1,6 +1,7 @@
 import { LogIn } from "lucide-react";
 import type { ReactNode } from "react";
 import { Card } from "@/components/ui/card";
+import { getDictionary } from "@/lib/i18n/server";
 import { signInWithGoogle } from "../actions";
 
 function GoogleMark() {
@@ -24,13 +25,7 @@ function GoogleMark() {
 }
 
 /** Google's brand mark must keep its own colours, so it is the one exception to theme tokens. */
-export function GoogleSignInButton({
-  callbackUrl,
-  label = "Continue with Google",
-}: {
-  callbackUrl: string;
-  label?: string;
-}) {
+export function GoogleSignInButton({ callbackUrl, label }: { callbackUrl: string; label: string }) {
   return (
     <form action={signInWithGoogle}>
       <input type="hidden" name="callbackUrl" value={callbackUrl} />
@@ -46,7 +41,7 @@ export function GoogleSignInButton({
 }
 
 /** Card shown to guests on pages that need an account. */
-export function SignInPrompt({
+export async function SignInPrompt({
   title,
   description,
   callbackUrl,
@@ -57,6 +52,7 @@ export function SignInPrompt({
   callbackUrl: string;
   children?: ReactNode;
 }) {
+  const t = await getDictionary();
   return (
     <Card className="mx-auto flex max-w-md flex-col items-center gap-4 p-8 text-center">
       <span className="grid size-12 place-items-center rounded-full bg-brand/15 text-brand-bright">
@@ -65,12 +61,10 @@ export function SignInPrompt({
       <h2 className="text-xl font-semibold">{title}</h2>
       <p className="text-sm text-muted">{description}</p>
       <div className="w-full pt-2">
-        <GoogleSignInButton callbackUrl={callbackUrl} />
+        <GoogleSignInButton callbackUrl={callbackUrl} label={t.auth.continueWithGoogle} />
       </div>
       {children}
-      <p className="text-xs text-muted">
-        We only use your Google name, email and photo. We never post on your behalf.
-      </p>
+      <p className="text-xs text-muted">{t.auth.prompt.note}</p>
     </Card>
   );
 }

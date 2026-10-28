@@ -1,25 +1,23 @@
 "use client";
 
 import { Check, ExternalLink, FlagOff, X } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState, useTransition } from "react";
 import { Button, buttonClasses } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Field, Textarea } from "@/components/ui/field";
 import type { RequestStatus } from "@/lib/constants/site";
+import { formatNumber, interpolate, translate } from "@/lib/i18n/format";
+import { LocalizedLink } from "@/lib/i18n/localized-link";
+import { useLocale } from "@/lib/i18n/locale-context";
 import type { ActionResult } from "@/lib/utils/result";
 import { approveRequestAction, dismissReportsAction, rejectRequestAction } from "../actions";
-import { useModerationFeedback } from "./moderation-feedback";
+import { useModerationFeedback, useModerationText } from "./moderation-feedback";
 
 type Pending = "approve" | "reject" | "dismiss" | null;
 
 const PUBLIC: RequestStatus[] = ["published", "fulfilled", "expired"];
-
-function publishedMessage({ email, telegram }: { email: number; telegram: number }) {
-  const emails = `${email} ${email === 1 ? "email" : "emails"}`;
-  return `Published — ${emails}${telegram > 0 ? " + Telegram" : ""} queued.`;
-}
+const NOTE_MAX_LENGTH = 300;
 
 export function RequestActions({
   requestId,
@@ -32,12 +30,21 @@ export function RequestActions({
 }) {
   const router = useRouter();
   const notify = useModerationFeedback();
+  const text = useModerationText().actions;
+  const { lang, t } = useLocale();
   const [pending, setPending] = useState<Pending>(null);
   const [, startTransition] = useTransition();
   const [rejectOpen, setRejectOpen] = useState(false);
   const [note, setNote] = useState("");
   const [rejectError, setRejectError] = useState<string | null>(null);
   const noteId = useId();
+
+  function publishedMessage({ email, telegram }: { email: number; telegram: number }) {
+    const emails = interpolate(email === 1 ? text.emailOne : text.emailOther, {
+      count: formatNumber(email, lang),
+    });
+    return interpolate(text.published, { emails, telegram: telegram > 0 ? text.publishedTelegram : "" });
+  }
 
   function run<T>(
     kind: Exclude<Pending, null>,
@@ -49,8 +56,9 @@ export function RequestActions({
       const result = await action();
       setPending(null);
       if (!result.ok) {
-        if (kind === "reject") setRejectError(result.error);
-        else notify("error", result.error);
+        const message = translate(t.feedback, result.error);
+        if (kind === "reject") setRejectError(message);
+        else notify("error", message);
         return;
       }
       if (kind === "reject") setRejectOpen(false);
@@ -73,7 +81,7 @@ export function RequestActions({
           onClick={() => run("approve", () => approveRequestAction(requestId), publishedMessage)}
         >
           {pending !== "approve" && <Check className="size-4" aria-hidden="true" />}
-          Approve
+          {text.approve}
         </Button>
       )}
       {canReject && (
@@ -87,7 +95,7 @@ export function RequestActions({
           }}
         >
           <X className="size-4" aria-hidden="true" />
-          Reject
+          {text.reject}
         </Button>
       )}
       {reportCount > 0 && (
@@ -100,26 +108,26 @@ export function RequestActions({
             run(
               "dismiss",
               () => dismissReportsAction("request", requestId),
-              () => "Reports dismissed.",
+              () => text.reportsDismissed,
             )
           }
         >
           {pending !== "dismiss" && <FlagOff className="size-4" aria-hidden="true" />}
-          Dismiss reports
+          {text.dismissReports}
         </Button>
       )}
       {PUBLIC.includes(status) && (
-        <Link href={`/requests/${requestId}`} className={buttonClasses("ghost", "sm")}>
+        <LocalizedLink href={`/requests/${requestId}`} className={buttonClasses("ghost", "sm")}>
           <ExternalLink className="size-4" aria-hidden="true" />
-          View public page
-        </Link>
+          {text.viewPublic}
+        </LocalizedLink>
       )}
 
       <Dialog
         open={rejectOpen}
         onClose={() => setRejectOpen(false)}
-        title="Reject this request?"
-        description="It will be hidden from the public and any queued notifications are cancelled."
+        title={text.rejectTitle}
+        description={text.rejectDescription}
       >
         <form
           className="flex flex-col gap-4"
@@ -129,19 +137,24 @@ export function RequestActions({
             run(
               "reject",
               () => rejectRequestAction(requestId, note),
-              () => "Request rejected.",
+              () => text.requestRejected,
             );
           }}
         >
-          <Field id={noteId} label="Note" optional hint="Up to 300 characters, saved with the request.">
+          <Field
+            id={noteId}
+            label={text.noteLabel}
+            optional
+            hint={interpolate(text.noteHint, { max: formatNumber(NOTE_MAX_LENGTH, lang) })}
+          >
             <Textarea
               id={noteId}
               value={note}
               onChange={(event) => setNote(event.target.value)}
-              maxLength={300}
+              maxLength={NOTE_MAX_LENGTH}
               rows={3}
               aria-describedby={`${noteId}-hint`}
-              placeholder="e.g. Hospital details could not be verified"
+              placeholder={text.notePlaceholder}
             />
           </Field>
           {rejectError && (
@@ -151,10 +164,10 @@ export function RequestActions({
           )}
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button variant="ghost" onClick={() => setRejectOpen(false)} disabled={pending === "reject"}>
-              Cancel
+              {text.cancel}
             </Button>
             <Button type="submit" variant="danger" pending={pending === "reject"}>
-              Reject request
+              {text.rejectSubmit}
             </Button>
           </div>
         </form>

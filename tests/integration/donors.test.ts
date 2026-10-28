@@ -61,7 +61,7 @@ describe("donor profile", () => {
     signInAs(await createUser());
     await expect(updatePreferencesAction({ available: false })).resolves.toEqual({
       ok: false,
-      error: "Complete your donor profile first.",
+      error: "donorProfileRequired",
     });
 
     const donor = await createDonor();

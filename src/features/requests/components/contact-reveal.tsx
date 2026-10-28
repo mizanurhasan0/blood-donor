@@ -3,47 +3,52 @@
 import { Check, Copy, LogIn, MessageSquare, Phone, UserPlus } from "lucide-react";
 import { useState, useTransition, type ReactNode } from "react";
 import { Button, ButtonLink } from "@/components/ui/button";
+import { translate } from "@/lib/i18n/format";
+import { useLocale } from "@/lib/i18n/locale-context";
+import { localizedPath } from "@/lib/i18n/paths";
 import { revealPhoneAction } from "../actions";
 
 /** What the current viewer may do with the requester's number (decided on the server). */
 export type ContactAccess = "allowed" | "guest" | "needs-donor" | "hidden" | "closed";
 
 export function ContactReveal({ requestId, access }: { requestId: string; access: ContactAccess }) {
+  const { lang, t } = useLocale();
+  const c = t.requests.contact;
   switch (access) {
     case "allowed":
       return <RevealPhone requestId={requestId} />;
     case "guest":
       return (
-        <Notice text="Sign in with a donor account to see the requester's number.">
+        <Notice text={c.signInNotice}>
           <ButtonLink
-            href={`/login?callbackUrl=${encodeURIComponent(`/requests/${requestId}`)}`}
+            href={`/login?callbackUrl=${encodeURIComponent(localizedPath(lang, `/requests/${requestId}`))}`}
             className="w-full"
           >
             <LogIn className="size-4" aria-hidden="true" />
-            Sign in to contact
+            {c.signIn}
           </ButtonLink>
         </Notice>
       );
     case "needs-donor":
       return (
-        <Notice text="Register as a donor to see contact numbers. It only takes a minute.">
+        <Notice text={c.donorNotice}>
           <ButtonLink href="/become-donor" className="w-full">
             <UserPlus className="size-4" aria-hidden="true" />
-            Become a donor
+            {c.becomeDonor}
           </ButtonLink>
         </Notice>
       );
     case "hidden":
       return (
-        <Notice text="The requester prefers to be contacted through comments.">
+        <Notice text={c.commentsNotice}>
           <ButtonLink href="#request-comments" variant="secondary" className="w-full">
             <MessageSquare className="size-4" aria-hidden="true" />
-            Go to comments
+            {c.goToComments}
           </ButtonLink>
         </Notice>
       );
     case "closed":
-      return <Notice text="This request is no longer active, so contact details are hidden." />;
+      return <Notice text={c.closedNotice} />;
   }
 }
 
@@ -57,6 +62,8 @@ function Notice({ text, children }: { text: string; children?: ReactNode }) {
 }
 
 function RevealPhone({ requestId }: { requestId: string }) {
+  const { t } = useLocale();
+  const c = t.requests.contact;
   const [phone, setPhone] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -66,7 +73,7 @@ function RevealPhone({ requestId }: { requestId: string }) {
     startTransition(async () => {
       const result = await revealPhoneAction(requestId);
       if (result.ok) setPhone(result.data);
-      else setError(result.error);
+      else setError(translate(t.feedback, result.error));
     });
   }
 
@@ -76,21 +83,21 @@ function RevealPhone({ requestId }: { requestId: string }) {
     <div className="flex flex-col gap-3">
       <Button onClick={reveal} pending={isPending} className="w-full">
         {!isPending && <Phone className="size-4" aria-hidden="true" />}
-        {isPending ? "Revealing…" : "Show number"}
+        {isPending ? c.revealing : c.show}
       </Button>
       {error && (
         <p role="alert" className="text-sm text-brand-bright">
           {error}
         </p>
       )}
-      <p className="text-xs text-muted">
-        Numbers are shown only to registered donors, and each view is logged.
-      </p>
+      <p className="text-xs text-muted">{c.revealNote}</p>
     </div>
   );
 }
 
 function RevealedPhone({ phone }: { phone: string }) {
+  const { t } = useLocale();
+  const c = t.requests.contact;
   const [copy, setCopy] = useState<"idle" | "copied" | "failed">("idle");
 
   async function copyNumber() {
@@ -111,7 +118,7 @@ function RevealedPhone({ phone }: { phone: string }) {
           className="inline-flex min-h-11 flex-1 items-center gap-2 rounded-button border border-success/40 bg-success/10 px-3.5 font-semibold tracking-wide text-success transition-colors hover:bg-success/15"
         >
           <Phone className="size-4" aria-hidden="true" />
-          <span className="sr-only">Call </span>
+          <span className="sr-only">{c.call} </span>
           {phone}
         </a>
         <button
@@ -124,12 +131,12 @@ function RevealedPhone({ phone }: { phone: string }) {
           ) : (
             <Copy className="size-4" aria-hidden="true" />
           )}
-          <span className="sr-only">Copy number</span>
+          <span className="sr-only">{c.copy}</span>
         </button>
       </div>
       <p role="status" className="min-h-4 text-xs text-muted">
-        {copy === "copied" && "Number copied."}
-        {copy === "failed" && "Couldn't copy — press and hold the number instead."}
+        {copy === "copied" && c.copied}
+        {copy === "failed" && c.copyFailed}
       </p>
     </div>
   );

@@ -1,0 +1,54 @@
+// Owner: layout & UI area (homepage). Keep en and bn keys identical (bn is type-checked against en).
+
+export const en = {
+  heroEyebrow: "Save Lives Together",
+  // The headline keeps three lines; the last one is highlighted in the brand colour.
+  heroTitleLine1: "United for",
+  heroTitleLine2: "Lives Across",
+  heroTitleHighlight: "Bangladesh",
+  heroBody:
+    "Connect with voluntary blood donors, share urgent requests, and help save lives across Bangladesh.",
+  postBloodRequest: "Post Blood Request",
+  becomeADonor: "Become a Donor",
+  supportLine1: "Real People.",
+  supportLine2: "Real Support.",
+  supportLocation: "Across Bangladesh",
+  statsLabel: "Community statistics",
+  statDonors: "Registered Donors",
+  statActiveRequests: "Active Requests",
+  statFulfilledRequests: "Fulfilled Requests",
+  statDistricts: "Districts Represented",
+  recentTitle: "Recent Blood Requests",
+  viewAll: "View All",
+  recentEmptyTitle: "No active requests right now",
+  recentEmptyBody: "When someone needs blood, their approved request will appear here.",
+  recentErrorTitle: "Requests are temporarily unavailable",
+  recentErrorBody: "Please try again in a moment.",
+  deletedNotice: "Your account and personal data have been deleted.",
+};
+
+export const bn: typeof en = {
+  heroEyebrow: "একসাথে জীবন বাঁচাই",
+  heroTitleLine1: "একসাথে",
+  heroTitleLine2: "জীবন বাঁচাতে",
+  heroTitleHighlight: "বাংলাদেশজুড়ে",
+  heroBody:
+    "স্বেচ্ছাসেবী রক্তদাতাদের সাথে যুক্ত হন, জরুরি অনুরোধ শেয়ার করুন এবং বাংলাদেশজুড়ে জীবন বাঁচাতে সাহায্য করুন।",
+  postBloodRequest: "রক্তের অনুরোধ দিন",
+  becomeADonor: "রক্তদাতা হন",
+  supportLine1: "সত্যিকারের মানুষ।",
+  supportLine2: "সত্যিকারের সহায়তা।",
+  supportLocation: "সারা বাংলাদেশে",
+  statsLabel: "কমিউনিটির পরিসংখ্যান",
+  statDonors: "নিবন্ধিত রক্তদাতা",
+  statActiveRequests: "সক্রিয় অনুরোধ",
+  statFulfilledRequests: "পূরণ হওয়া অনুরোধ",
+  statDistricts: "প্রতিনিধিত্বকারী জেলা",
+  recentTitle: "সাম্প্রতিক রক্তের অনুরোধ",
+  viewAll: "সব দেখুন",
+  recentEmptyTitle: "এই মুহূর্তে কোনো সক্রিয় অনুরোধ নেই",
+  recentEmptyBody: "কারও রক্তের প্রয়োজন হলে অনুমোদিত অনুরোধটি এখানে দেখা যাবে।",
+  recentErrorTitle: "অনুরোধগুলো এখন দেখানো যাচ্ছে না",
+  recentErrorBody: "কিছুক্ষণ পরে আবার চেষ্টা করুন।",
+  deletedNotice: "আপনার অ্যাকাউন্ট ও ব্যক্তিগত তথ্য মুছে ফেলা হয়েছে।",
+};

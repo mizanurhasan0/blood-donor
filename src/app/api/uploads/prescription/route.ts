@@ -17,14 +17,14 @@ export async function POST(request: Request) {
     const viewer = await requireViewer();
     const declaredLength = Number(request.headers.get("content-length") ?? 0);
     if (declaredLength > LIMITS.documentMaxBytes + 64 * 1024) {
-      throw new AppError("The file is larger than 5 MB.", "INVALID");
+      throw new AppError("documentTooLarge", "INVALID");
     }
     const limit = await enforceRateLimit("upload", viewer.id);
-    if (!limit.ok) throw new AppError("Too many uploads. Please try again later.", "RATE_LIMITED");
+    if (!limit.ok) throw new AppError("uploadRateLimited", "RATE_LIMITED");
 
     const form = await request.formData().catch(() => null);
     const file = form?.get("file");
-    if (!(file instanceof File)) throw new AppError("Choose a file to upload.", "INVALID");
+    if (!(file instanceof File)) throw new AppError("chooseFile", "INVALID");
 
     const bytes = new Uint8Array(await file.arrayBuffer());
     const check = validateDocument(bytes, file.type);

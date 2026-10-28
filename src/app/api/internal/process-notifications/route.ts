@@ -11,7 +11,7 @@ import { processNotificationJobs } from "@/features/notifications/notification.s
  */
 export async function POST(request: Request) {
   if (!isConfigured("cron") || !hasBearer(request, env("cron").NOTIFICATION_CRON_SECRET)) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
+    return Response.json({ error: "unauthorized" }, { status: 401 });
   }
   try {
     const expired = await expireOutdatedRequests();

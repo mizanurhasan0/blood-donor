@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { collections } from "@/lib/db/collections";
+import { bn as notifyBn } from "@/lib/i18n/messages/notify";
 import {
   enqueueRequestNotifications,
   processNotificationJobs,
@@ -171,7 +172,7 @@ describe("POST /api/telegram/webhook", () => {
     expect(calls.at(-1)!.body.text).toContain("https://t.me/+testInvite");
 
     await update(startMessage(`/start ${linkToken}`, 777));
-    expect(calls.at(-1)!.body.text).toContain("expired or was already used");
+    expect(calls.at(-1)!.body.text).toContain(notifyBn.botLinkExpired);
     expect((await users.findOne({ _id: donor._id }))!.donorProfile!.telegramUserId).toBe(555);
   });
 

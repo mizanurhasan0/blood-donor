@@ -92,7 +92,7 @@ describe("createBloodRequest", () => {
       createBloodRequest(await viewerFor(user), requestValues({ documentKey })),
     ).rejects.toMatchObject({
       code: "INVALID",
-      message: "Upload the document again.",
+      message: "documentUploadAgain",
     });
     expect(headObject).not.toHaveBeenCalled();
     const { requests } = await collections();

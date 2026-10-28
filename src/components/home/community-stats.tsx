@@ -5,33 +5,36 @@ import type { ReactNode } from "react";
 import { Container } from "@/components/ui/container";
 import { getCommunityStats } from "@/features/requests/request.queries";
 import type { CommunityStats as Stats } from "@/features/requests/types";
+import { formatNumber } from "@/lib/i18n/format";
+import type { Dictionary } from "@/lib/i18n/messages";
+import { getDictionary, getLocale } from "@/lib/i18n/server";
 
-const compact = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 });
+type HomeText = Dictionary["home"];
 
-const METRICS: { key: keyof Stats; label: string; icon: ReactNode }[] = [
-  { key: "donors", label: "Registered Donors", icon: <Users className="size-6" aria-hidden="true" /> },
+const METRICS: { key: keyof Stats; label: keyof HomeText; icon: ReactNode }[] = [
+  { key: "donors", label: "statDonors", icon: <Users className="size-6" aria-hidden="true" /> },
   {
     key: "activeRequests",
-    label: "Active Requests",
+    label: "statActiveRequests",
     icon: <HeartPulse className="size-6" aria-hidden="true" />,
   },
   {
     key: "fulfilledRequests",
-    label: "Fulfilled Requests",
+    label: "statFulfilledRequests",
     icon: <CheckCircle2 className="size-6" aria-hidden="true" />,
   },
   {
     key: "districts",
-    label: "Districts Represented",
+    label: "statDistricts",
     icon: <MapPin className="size-6" aria-hidden="true" />,
   },
 ];
 
-function StatsFrame({ children }: { children: ReactNode }) {
+function StatsFrame({ label, children }: { label: string; children: ReactNode }) {
   return (
     <Container>
       <section
-        aria-label="Community statistics"
+        aria-label={label}
         className="grid grid-cols-2 gap-y-6 rounded-card border border-outline/70 bg-surface/70 px-4 py-6 shadow-card sm:px-6 lg:grid-cols-4 lg:divide-x lg:divide-outline/70 lg:py-7"
       >
         {children}
@@ -57,6 +60,7 @@ function Metric({ icon, value, label }: { icon: ReactNode; value: ReactNode; lab
 /** Live counts straight from the database — never estimated or padded. */
 export async function CommunityStats() {
   await connection();
+  const [t, lang] = await Promise.all([getDictionary(), getLocale()]);
   let stats: Stats;
   try {
     stats = await getCommunityStats();
@@ -66,22 +70,22 @@ export async function CommunityStats() {
     return null;
   }
   return (
-    <StatsFrame>
+    <StatsFrame label={t.home.statsLabel}>
       {METRICS.map((m) => (
-        <Metric key={m.key} icon={m.icon} label={m.label} value={compact.format(stats[m.key])} />
+        <Metric key={m.key} icon={m.icon} label={t.home[m.label]} value={formatNumber(stats[m.key], lang)} />
       ))}
     </StatsFrame>
   );
 }
 
-export function CommunityStatsSkeleton() {
+export function CommunityStatsSkeleton({ t }: { t: HomeText }) {
   return (
-    <StatsFrame>
+    <StatsFrame label={t.statsLabel}>
       {METRICS.map((m) => (
         <Metric
           key={m.key}
           icon={m.icon}
-          label={m.label}
+          label={t[m.label]}
           value={<span className="inline-block h-8 w-14 animate-pulse rounded bg-elevated align-middle" />}
         />
       ))}

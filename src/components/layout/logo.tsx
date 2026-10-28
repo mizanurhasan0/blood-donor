@@ -1,9 +1,9 @@
-import Link from "next/link";
+import { LocalizedLink } from "@/lib/i18n/localized-link";
 import { cn } from "@/lib/utils/cn";
 
 export function BloodDrop({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 32" className={cn("text-brand", className)} aria-hidden="true">
+    <svg viewBox="0 0 24 32" className={cn(className)} aria-hidden="true">
       <path
         fill="currentColor"
         d="M12 1.2c.4 0 .8.2 1 .6 1.9 3.1 4.3 6.2 6.2 9.4 1.9 3.1 3.1 5.8 3.1 8.6C22.3 26 17.7 30.8 12 30.8S1.7 26 1.7 19.8c0-2.8 1.2-5.5 3.1-8.6C6.7 8 9.1 4.9 11 1.8c.2-.4.6-.6 1-.6Z"
@@ -20,20 +20,33 @@ export function BloodDrop({ className }: { className?: string }) {
   );
 }
 
-export function Logo({ className }: { className?: string }) {
+/** Drop silhouette only, used as a background behind text (no highlights). */
+export function BloodDropShape({ className }: { className?: string }) {
   return (
-    <Link
+    <svg viewBox="0 0 24 32" className={cn(className)} aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M12 1.2c.4 0 .8.2 1 .6 1.9 3.1 4.3 6.2 6.2 9.4 1.9 3.1 3.1 5.8 3.1 8.6C22.3 26 17.7 30.8 12 30.8S1.7 26 1.7 19.8c0-2.8 1.2-5.5 3.1-8.6C6.7 8 9.1 4.9 11 1.8c.2-.4.6-.6 1-.6Z"
+      />
+    </svg>
+  );
+}
+
+/** The brand name is not translated. `homeLabel` is the screen-reader text for the link to the homepage. */
+export function Logo({ className, homeLabel }: { className?: string; homeLabel: string }) {
+  return (
+    <LocalizedLink
       href="/"
       className={cn(
         "inline-flex items-center gap-2.5 rounded-button text-2xl font-bold tracking-tight",
         className,
       )}
     >
-      <BloodDrop className="h-8 w-6 drop-shadow-[0_0_10px_var(--color-brand)]" />
+      <BloodDrop className="h-8 w-6 text-brand drop-shadow-[0_0_10px_var(--color-brand)]" />
       <span>
         Blood<span className="text-brand">Link</span>
       </span>
-      <span className="sr-only">home</span>
-    </Link>
+      <span className="sr-only">{homeLabel}</span>
+    </LocalizedLink>
   );
 }

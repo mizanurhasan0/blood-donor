@@ -5,6 +5,8 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/dialog";
+import { translate } from "@/lib/i18n/format";
+import { useT } from "@/lib/i18n/locale-context";
 import { markFulfilledAction } from "../actions";
 
 /**
@@ -18,6 +20,8 @@ export function RequestOwnerActions({
   requestId: string;
   canMarkFulfilled: boolean;
 }) {
+  const t = useT();
+  const o = t.requests.owner;
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -30,26 +34,24 @@ export function RequestOwnerActions({
     startTransition(async () => {
       const result = await markFulfilledAction(requestId);
       setOpen(false);
-      if (result.ok) setMessage(result.message ?? "Marked as fulfilled.");
-      else setError(result.error);
+      if (result.ok) setMessage(result.message ? translate(t.feedback, result.message) : o.done);
+      else setError(translate(t.feedback, result.error));
     });
   }
 
   return (
     <Card className="flex flex-col gap-3 p-5">
-      <h2 className="text-base font-semibold">Manage request</h2>
+      <h2 className="text-base font-semibold">{o.title}</h2>
       <p role="status" className={message ? "flex gap-2 text-sm text-success" : "sr-only"}>
         {message && <CircleCheck className="mt-0.5 size-4 shrink-0" aria-hidden="true" />}
         {message}
       </p>
       {!message && (
         <>
-          <p className="text-sm text-muted">
-            Got the blood you needed? Mark it fulfilled so donors can help someone else.
-          </p>
+          <p className="text-sm text-muted">{o.body}</p>
           <Button variant="secondary" onClick={() => setOpen(true)} className="w-full">
             <HeartHandshake className="size-4" aria-hidden="true" />
-            Mark as fulfilled
+            {o.markFulfilled}
           </Button>
         </>
       )}
@@ -61,9 +63,9 @@ export function RequestOwnerActions({
       <ConfirmDialog
         open={open}
         onClose={() => !isPending && setOpen(false)}
-        title="Mark this request as fulfilled?"
-        description="It will be shown as fulfilled and donors will stop receiving alerts for it. This can't be undone."
-        confirmLabel="Mark as fulfilled"
+        title={o.confirmTitle}
+        description={o.confirmBody}
+        confirmLabel={o.markFulfilled}
         onConfirm={confirm}
         pending={isPending}
         destructive={false}

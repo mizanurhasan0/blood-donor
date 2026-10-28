@@ -1,7 +1,8 @@
 "use client";
 
 import { Search, SlidersHorizontal, X } from "lucide-react";
-import { useEffect, useEffectEvent, useId, useState } from "react";
+import { useEffect, useEffectEvent, useId, useMemo, useState, type ReactNode } from "react";
+import { BloodDropShape } from "@/components/layout/logo";
 import { Combobox } from "@/components/ui/combobox";
 import { Field, Input, Select } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,28 +10,40 @@ import { Spinner } from "@/components/ui/spinner";
 import { useDebounce } from "@/hooks/use-debounce";
 import { BLOOD_GROUPS } from "@/lib/constants/blood-groups";
 import { DISTRICTS } from "@/lib/constants/locations";
+import { formatNumber, interpolate } from "@/lib/i18n/format";
+import { useLocale, useT } from "@/lib/i18n/locale-context";
 import { cn } from "@/lib/utils/cn";
 import { useRequestFilters } from "../hooks/use-request-filters";
 
-const DISTRICT_OPTIONS = DISTRICTS.map((d) => ({ value: d.name, label: d.name, hint: d.division }));
-
-const chipClasses =
-  "inline-flex min-h-11 min-w-11 items-center justify-center rounded-pill border px-3.5 text-sm font-semibold transition-colors";
+const tileClasses =
+  "relative flex min-h-16 items-center justify-center rounded-button border px-2 py-2 transition-colors";
 
 /**
  * URL-driven filters for /requests. Must render under <Suspense> because it
  * reads search params. Sets `data-pending` while results load so the list
  * (inside the same `group/requests`) can dim itself with pure CSS.
  */
-export function BloodRequestFilters() {
+export function BloodRequestFilters({ action }: { action?: ReactNode }) {
+  const t = useT();
+  const { lang } = useLocale();
+  const f = t.requests.filters;
   const { filters, activeCount, hasFilters, isPending, setFilter, clear } = useRequestFilters();
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const applied = activeCount + (filters.q ? 1 : 0);
+  const districtOptions = useMemo(
+    () =>
+      DISTRICTS.map((d) => ({
+        value: d.name,
+        label: t.geo.districts[d.name],
+        hint: t.geo.divisions[d.division],
+      })),
+    [t],
+  );
 
   return (
     <section
-      aria-label="Filter blood requests"
+      aria-label={f.label}
       data-pending={isPending || undefined}
       className="rounded-card border border-outline/70 bg-card/60 p-4 shadow-card sm:p-5"
     >
@@ -41,77 +54,82 @@ export function BloodRequestFilters() {
           aria-expanded={open}
           aria-controls={panelId}
           onClick={() => setOpen((v) => !v)}
-          className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-button border border-outline px-3.5 text-sm font-medium transition-colors hover:border-muted lg:hidden"
+          className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-button border border-outline px-3 text-sm font-medium transition-colors hover:border-muted lg:hidden"
         >
           <SlidersHorizontal className="size-4" aria-hidden="true" />
-          Filters
+          <span className="sr-only sm:not-sr-only">{f.button}</span>
           {activeCount > 0 && (
             <span className="grid min-w-5 place-items-center rounded-pill bg-brand-strong px-1.5 text-xs leading-5 font-semibold">
-              {activeCount}
-              <span className="sr-only"> active</span>
+              {formatNumber(activeCount, lang)}
+              <span className="sr-only"> {f.activeSr}</span>
             </span>
           )}
         </button>
+        {action}
       </div>
 
       <div id={panelId} className={cn(open ? "flex" : "hidden", "mt-4 flex-col gap-4 lg:flex")}>
-        <BloodGroupChips value={filters.bloodGroup} onChange={(v) => setFilter("bloodGroup", v)} />
+        <BloodGroupPicker value={filters.bloodGroup} onChange={(v) => setFilter("bloodGroup", v)} />
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Field id="filter-district" label="District">
+          <Field id="filter-district" label={f.district}>
             <Combobox
               id="filter-district"
               value={filters.district ?? ""}
               onChange={(v) => setFilter("district", v)}
-              options={DISTRICT_OPTIONS}
-              placeholder="Any district"
+              options={districtOptions}
+              placeholder={f.anyDistrict}
               clearable
             />
           </Field>
-          <Field id="filter-urgency" label="Urgency">
+          <Field id="filter-urgency" label={f.urgency}>
             <Select
               id="filter-urgency"
               value={filters.urgency ?? ""}
               onChange={(e) => setFilter("urgency", e.target.value)}
             >
-              <option value="">Any urgency</option>
-              <option value="urgent">Urgent</option>
-              <option value="normal">Normal</option>
+              <option value="">{f.anyUrgency}</option>
+              <option value="urgent">{t.requests.urgency.urgent}</option>
+              <option value="normal">{t.requests.urgency.normal}</option>
             </Select>
           </Field>
-          <Field id="filter-status" label="Status">
+          <Field id="filter-status" label={f.status}>
             <Select
               id="filter-status"
               value={filters.status}
               onChange={(e) => setFilter("status", e.target.value)}
             >
-              <option value="published">Active</option>
-              <option value="fulfilled">Fulfilled</option>
-              <option value="expired">Expired</option>
+              <option value="published">{t.requests.status.published}</option>
+              <option value="fulfilled">{t.requests.status.fulfilled}</option>
+              <option value="expired">{t.requests.status.expired}</option>
             </Select>
           </Field>
-          <Field id="filter-needed" label="Needed by">
+          <Field id="filter-needed" label={t.requests.neededBy}>
             <Select
               id="filter-needed"
               value={filters.needed ?? ""}
               onChange={(e) => setFilter("needed", e.target.value)}
             >
-              <option value="">Any date</option>
-              <option value="today">Today</option>
-              <option value="3d">Next 3 days</option>
-              <option value="7d">Next 7 days</option>
+              <option value="">{f.anyDate}</option>
+              <option value="today">{t.requests.today}</option>
+              <option value="3d">{f.nextThreeDays}</option>
+              <option value="7d">{f.nextSevenDays}</option>
             </Select>
           </Field>
         </div>
       </div>
 
       <p aria-live="polite" className="sr-only">
-        {isPending ? "Updating results" : ""}
+        {isPending ? f.updatingResults : ""}
       </p>
       {(hasFilters || isPending) && (
         <div className="mt-4 flex min-h-11 items-center justify-between gap-3 border-t border-outline/60 pt-3">
           <span className="flex items-center gap-2 text-sm text-muted">
             {isPending && <Spinner className="size-4 text-brand-bright" />}
-            {isPending ? "Updating…" : `${applied} ${applied === 1 ? "filter" : "filters"} applied`}
+            {isPending
+              ? f.updating
+              : interpolate(applied === 1 ? f.filterAppliedOne : f.filterAppliedOther, {
+                  count: formatNumber(applied, lang),
+                })}
           </span>
           {hasFilters && (
             <button
@@ -120,7 +138,7 @@ export function BloodRequestFilters() {
               className="inline-flex min-h-11 items-center gap-1.5 rounded-pill px-3 text-sm font-medium text-muted transition-colors hover:bg-surface hover:text-foreground"
             >
               <X className="size-4" aria-hidden="true" />
-              Clear filters
+              {f.clear}
             </button>
           )}
         </div>
@@ -130,6 +148,8 @@ export function BloodRequestFilters() {
 }
 
 function SearchBox({ value, onSearch }: { value: string; onSearch: (q: string) => void }) {
+  const t = useT();
+  const f = t.requests.filters;
   const [text, setText] = useState(value);
   const [synced, setSynced] = useState(value);
   const debounced = useDebounce(text, 350);
@@ -157,19 +177,29 @@ function SearchBox({ value, onSearch }: { value: string; onSearch: (q: string) =
       }}
     >
       <label htmlFor="filter-search" className="sr-only">
-        Search by hospital or district
+        {f.search}
       </label>
       <Search
         className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted"
         aria-hidden="true"
       />
+      {/* Responsive hint: a short phrase fits on phones, where the full one would be cut off. */}
+      {!text && (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute top-1/2 left-10 -translate-y-1/2 truncate text-muted/60"
+        >
+          <span className="sm:hidden">{f.searchShort}</span>
+          <span className="hidden sm:inline">{f.searchHint}</span>
+        </span>
+      )}
       <Input
         id="filter-search"
         type="search"
         value={text}
         maxLength={60}
         onChange={(e) => setText(e.target.value)}
-        placeholder="Search hospital or district"
+        placeholder=""
         autoComplete="off"
         enterKeyHint="search"
         className="pl-10"
@@ -178,11 +208,13 @@ function SearchBox({ value, onSearch }: { value: string; onSearch: (q: string) =
   );
 }
 
-function BloodGroupChips({ value, onChange }: { value?: string; onChange: (value: string) => void }) {
+/** Blood group tiles with a drop icon each; tapping the selected tile clears the filter. */
+function BloodGroupPicker({ value, onChange }: { value?: string; onChange: (value: string) => void }) {
+  const t = useT();
   return (
     <fieldset>
-      <legend className="mb-2 text-sm font-medium">Blood group</legend>
-      <div className="flex flex-wrap gap-2">
+      <legend className="mb-2 text-sm font-medium">{t.requests.bloodGroup}</legend>
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-9">
         {["", ...BLOOD_GROUPS].map((group) => {
           const active = (value ?? "") === group;
           return (
@@ -192,13 +224,32 @@ function BloodGroupChips({ value, onChange }: { value?: string; onChange: (value
               aria-pressed={active}
               onClick={() => onChange(active ? "" : group)}
               className={cn(
-                chipClasses,
+                tileClasses,
                 active
-                  ? "border-brand-strong bg-brand-strong text-foreground"
-                  : "border-outline text-muted hover:border-muted hover:text-foreground",
+                  ? "border-brand-strong bg-brand-strong/10"
+                  : "border-outline bg-surface hover:border-muted",
               )}
             >
-              {group || "Any"}
+              {group ? (
+                /* The group letters sit inside the drop, so the drop is the visual tile. */
+                <span className="relative inline-flex h-14">
+                  <BloodDropShape
+                    className={cn("h-full w-auto", active ? "text-foreground" : "text-brand-strong")}
+                  />
+                  <span
+                    className={cn(
+                      "absolute inset-x-0 bottom-3 text-center text-base leading-none font-bold",
+                      active ? "text-background" : "text-foreground",
+                    )}
+                  >
+                    {group}
+                  </span>
+                </span>
+              ) : (
+                <span className={cn("text-base font-bold", active ? "text-brand-bright" : "text-muted")}>
+                  {t.requests.filters.any}
+                </span>
+              )}
             </button>
           );
         })}
@@ -212,12 +263,13 @@ export function BloodRequestFiltersSkeleton() {
     <div aria-hidden="true" className="rounded-card border border-outline/70 bg-card/60 p-4 sm:p-5">
       <div className="flex gap-3">
         <Skeleton className="h-11 flex-1" />
-        <Skeleton className="h-11 w-28 lg:hidden" />
+        <Skeleton className="h-11 w-11 shrink-0 lg:hidden" />
+        <Skeleton className="h-11 w-24 shrink-0 sm:w-36" />
       </div>
       <div className="mt-4 hidden flex-col gap-4 lg:flex">
-        <div className="flex gap-2">
+        <div className="grid grid-cols-9 gap-2">
           {Array.from({ length: 9 }, (_, i) => (
-            <Skeleton key={i} className="size-11 rounded-pill" />
+            <Skeleton key={i} className="h-14" />
           ))}
         </div>
         <div className="grid grid-cols-4 gap-3">

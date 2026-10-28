@@ -7,36 +7,35 @@ import { bdPhoneSchema, bloodGroupSchema, cleanText, districtSchema } from "./co
 
 export const DOCUMENT_KEY_PATTERN = /^prescriptions\/[a-f\d]{24}\/[A-Za-z0-9_-]{16,64}\.(jpg|png|webp|pdf)$/;
 
+// Messages are feedback keys (see lib/i18n/messages/feedback.ts), translated on screen.
 export const bloodRequestSchema = z.object({
   bloodGroup: bloodGroupSchema,
   units: z.coerce
-    .number({ error: "Enter the number of units" })
-    .int()
-    .min(1, "At least 1 unit")
-    .max(LIMITS.maxUnits, `At most ${LIMITS.maxUnits} units`),
+    .number({ error: "unitsRequired" })
+    .int("unitsWhole")
+    .min(1, "unitsTooFew")
+    .max(LIMITS.maxUnits, "unitsTooMany"),
   hospitalName: z
-    .string()
+    .string({ error: "hospitalRequired" })
     .transform(cleanText)
-    .pipe(z.string().min(3, "Enter the hospital or institute name").max(120, "Keep it under 120 characters")),
+    .pipe(z.string().min(3, "hospitalRequired").max(120, "hospitalTooLong")),
   district: districtSchema,
   neededDate: z.iso
-    .date({ error: "Choose the date blood is needed" })
-    .refine((d) => d >= todayInBangladesh(), "The date cannot be in the past")
-    .refine(
-      (d) => d <= addDays(todayInBangladesh(), LIMITS.maxDaysAhead),
-      `Choose a date within the next ${LIMITS.maxDaysAhead} days`,
-    ),
+    .date({ error: "neededDateRequired" })
+    .refine((d) => d >= todayInBangladesh(), "neededDatePast")
+    .refine((d) => d <= addDays(todayInBangladesh(), LIMITS.maxDaysAhead), "neededDateTooFar"),
   contactPhone: bdPhoneSchema,
   description: z
-    .string()
+    .string({ error: "This field is required" })
     .transform(cleanText)
-    .pipe(
-      z.string().max(LIMITS.descriptionMaxLength, `Keep it under ${LIMITS.descriptionMaxLength} characters`),
-    ),
-  urgency: z.enum(URGENCIES),
-  allowPhoneReveal: z.boolean(),
-  shareDocumentWithDonors: z.boolean(),
-  documentKey: z.string().regex(DOCUMENT_KEY_PATTERN, "Upload the document again").optional(),
+    .pipe(z.string().max(LIMITS.descriptionMaxLength, "descriptionTooLong")),
+  urgency: z.enum(URGENCIES, { error: "This field is required" }),
+  allowPhoneReveal: z.boolean({ error: "This field is required" }),
+  shareDocumentWithDonors: z.boolean({ error: "This field is required" }),
+  documentKey: z
+    .string({ error: "documentKeyInvalid" })
+    .regex(DOCUMENT_KEY_PATTERN, "documentKeyInvalid")
+    .optional(),
 });
 
 export type BloodRequestInput = z.input<typeof bloodRequestSchema>;

@@ -92,7 +92,7 @@ describe("createRequestAction", () => {
 
     expect(result).toMatchObject({
       ok: true,
-      message: expect.stringContaining("waiting for a quick review"),
+      message: "Your request was submitted and is waiting for a quick review.",
     });
     const id = result.ok ? result.data.id : "";
     expect(await findRequest(id)).toMatchObject({

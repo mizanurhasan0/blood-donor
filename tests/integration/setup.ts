@@ -56,6 +56,15 @@ vi.mock("next/server", async (importOriginal) => ({
   connection: vi.fn(async () => undefined),
 }));
 
+// next/root-params only exists inside the Next.js compiler. Tests run the Bangla dictionary.
+vi.mock("@/lib/i18n/server", async () => {
+  const { messages } = await import("@/lib/i18n/messages");
+  return {
+    getLocale: vi.fn(async () => "bn"),
+    getDictionary: vi.fn(async () => messages.bn),
+  };
+});
+
 // auth() returns whatever session the test set with signInAs().
 vi.mock("@/features/auth/auth", async () => {
   const { currentSession } = await import("./support/session");
