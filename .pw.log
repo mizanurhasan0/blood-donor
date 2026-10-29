@@ -1,0 +1,530 @@
+
+Running 26 tests using 1 worker
+
+[1/26] [desktop] › tests/e2e/accessibility.spec.ts:14:7 › no serious accessibility violations on /
+[WebServer] ⚠ metadataBase property in metadata export is not set for resolving social open graph or twitter images, using "http://localhost:3100". See https://nextjs.org/docs/app/api-reference/functions/generate-metadata#metadatabase
+
+[2/26] [desktop] › tests/e2e/accessibility.spec.ts:14:7 › no serious accessibility violations on /requests
+  1) [desktop] › tests/e2e/accessibility.spec.ts:14:7 › no serious accessibility violations on /requests 
+
+    Error: expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 3
+
+    - Array []
+    + Array [
+    +   "color-contrast: .left-10 > .sm\\:inline.hidden",
+    + ]
+
+      17 |     const { violations } = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
+      18 |     const serious = violations.filter((v) => v.impact === "serious" || v.impact === "critical");
+    > 19 |     expect(serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`)).toEqual([]);
+         |                                                                                                 ^
+      20 |   });
+      21 | }
+      22 |
+        at /Users/pylot/Downloads/self/blood-donor/tests/e2e/accessibility.spec.ts:19:97
+
+    Error Context: test-results/accessibility-no-serious-a-3f727-lity-violations-on-requests-desktop/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/accessibility-no-serious-a-3f727-lity-violations-on-requests-desktop/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/accessibility-no-serious-a-3f727-lity-violations-on-requests-desktop/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[3/26] [desktop] › tests/e2e/accessibility.spec.ts:14:7 › no serious accessibility violations on /requests/64c000000000000000000001
+[4/26] [desktop] › tests/e2e/accessibility.spec.ts:14:7 › no serious accessibility violations on /how-it-works
+[5/26] [desktop] › tests/e2e/accessibility.spec.ts:14:7 › no serious accessibility violations on /login
+[6/26] [desktop] › tests/e2e/accessibility.spec.ts:14:7 › no serious accessibility violations on /privacy
+[7/26] [desktop] › tests/e2e/home.spec.ts:4:7 › homepage › renders hero, real stats and recent requests
+  2) [desktop] › tests/e2e/home.spec.ts:4:7 › homepage › renders hero, real stats and recent requests 
+
+    Error: expect(page).toHaveTitle(expected) failed
+
+    Expected: "BloodLink | Blood Donation Community Bangladesh"
+    Received: "BloodLink | বাংলাদেশের রক্তদান কমিউনিটি"
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveTitle" with timeout 5000ms
+        14 × locator resolved to <html lang="bn" class="_4LtYgq_variable IjU4Qq_variable h-full antialiased">…</html>
+           - unexpected value "BloodLink | বাংলাদেশের রক্তদান কমিউনিটি"
+
+
+      4 |   test("renders hero, real stats and recent requests", async ({ page }) => {
+      5 |     await page.goto("/");
+    > 6 |     await expect(page).toHaveTitle("BloodLink | Blood Donation Community Bangladesh");
+        |                        ^
+      7 |     await expect(page.getByRole("heading", { level: 1 })).toContainText("United for");
+      8 |     await expect(page.getByRole("heading", { level: 1 })).toContainText("Bangladesh");
+      9 |
+        at /Users/pylot/Downloads/self/blood-donor/tests/e2e/home.spec.ts:6:24
+
+    Error Context: test-results/home-homepage-renders-hero-real-stats-and-recent-requests-desktop/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/home-homepage-renders-hero-real-stats-and-recent-requests-desktop/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/home-homepage-renders-hero-real-stats-and-recent-requests-desktop/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[8/26] [desktop] › tests/e2e/home.spec.ts:22:7 › homepage › primary navigation works
+  3) [desktop] › tests/e2e/home.spec.ts:22:7 › homepage › primary navigation works ─────────────────
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Blood Requests' })
+
+
+      23 |     await page.goto("/");
+      24 |     const nav = page.getByRole("navigation", { name: "Main" });
+    > 25 |     await nav.getByRole("link", { name: "Blood Requests" }).click();
+         |                                                             ^
+      26 |     await expect(page).toHaveURL(/\/requests$/);
+      27 |     await expect(page.getByRole("heading", { level: 1, name: "Blood Requests" })).toBeVisible();
+      28 |     await expect(nav.getByRole("link", { name: "Blood Requests" })).toHaveAttribute("aria-current", "page");
+        at /Users/pylot/Downloads/self/blood-donor/tests/e2e/home.spec.ts:25:61
+
+    Error Context: test-results/home-homepage-primary-navigation-works-desktop/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/home-homepage-primary-navigation-works-desktop/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/home-homepage-primary-navigation-works-desktop/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[9/26] [desktop] › tests/e2e/home.spec.ts:31:7 › homepage › guests are asked to sign in before posting a request
+  4) [desktop] › tests/e2e/home.spec.ts:31:7 › homepage › guests are asked to sign in before posting a request 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('link', { name: 'Post Blood Request' }).first()
+
+
+      31 |   test("guests are asked to sign in before posting a request", async ({ page }) => {
+      32 |     await page.goto("/");
+    > 33 |     await page.getByRole("link", { name: "Post Blood Request" }).first().click();
+         |                                                                          ^
+      34 |     await expect(page).toHaveURL(/\/request\/new$/);
+      35 |     await expect(page.getByRole("button", { name: /Continue with Google/ })).toBeVisible();
+      36 |   });
+        at /Users/pylot/Downloads/self/blood-donor/tests/e2e/home.spec.ts:33:74
+
+    Error Context: test-results/home-homepage-guests-are-a-14873-in-before-posting-a-request-desktop/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/home-homepage-guests-are-a-14873-in-before-posting-a-request-desktop/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/home-homepage-guests-are-a-14873-in-before-posting-a-request-desktop/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[10/26] [desktop] › tests/e2e/requests.spec.ts:6:7 › request listing › shows published requests only
+[11/26] [desktop] › tests/e2e/requests.spec.ts:13:7 › request listing › filters by blood group through the URL and clears
+  5) [desktop] › tests/e2e/requests.spec.ts:13:7 › request listing › filters by blood group through the URL and clears 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('link', { name: /Clear filters/ }).first()
+
+
+      21 |       .getByRole("link", { name: /Clear filters/ })
+      22 |       .first()
+    > 23 |       .click();
+         |        ^
+      24 |     await expect(page).toHaveURL(/\/requests$/);
+      25 |     await expect(page.getByText("Dhaka Medical College Hospital")).toBeVisible();
+      26 |   });
+        at /Users/pylot/Downloads/self/blood-donor/tests/e2e/requests.spec.ts:23:8
+
+    Error Context: test-results/requests-request-listing-f-9de7f--through-the-URL-and-clears-desktop/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/requests-request-listing-f-9de7f--through-the-URL-and-clears-desktop/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/requests-request-listing-f-9de7f--through-the-URL-and-clears-desktop/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[12/26] [desktop] › tests/e2e/requests.spec.ts:28:7 › request listing › searches by hospital or district
+  6) [desktop] › tests/e2e/requests.spec.ts:28:7 › request listing › searches by hospital or district 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('searchbox', { name: /Search by hospital or district/ })
+
+
+      28 |   test("searches by hospital or district", async ({ page }) => {
+      29 |     await page.goto("/requests");
+    > 30 |     await page.getByRole("searchbox", { name: /Search by hospital or district/ }).fill("Chattogram");
+         |                                                                                   ^
+      31 |     await expect(page).toHaveURL(/q=Chattogram/);
+      32 |     await expect(page.getByText("Dhaka Medical College Hospital")).toHaveCount(0);
+      33 |     await expect(page.getByText("Chattogram Medical College")).toBeVisible();
+        at /Users/pylot/Downloads/self/blood-donor/tests/e2e/requests.spec.ts:30:83
+
+    Error Context: test-results/requests-request-listing-searches-by-hospital-or-district-desktop/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/requests-request-listing-searches-by-hospital-or-district-desktop/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/requests-request-listing-searches-by-hospital-or-district-desktop/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[13/26] [desktop] › tests/e2e/requests.spec.ts:36:7 › request listing › direct filter URLs are server-rendered
+[14/26] [desktop] › tests/e2e/requests.spec.ts:44:7 › request detail › shows details without exposing the phone number
+  7) [desktop] › tests/e2e/requests.spec.ts:44:7 › request detail › shows details without exposing the phone number 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByText('Sign in to join the conversation')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByText('Sign in to join the conversation') with timeout 5000ms
+      - waiting for getByText('Sign in to join the conversation')
+
+
+      48 |     await expect(page.getByText("017•••••678").first()).toBeVisible();
+      49 |     expect(await page.content()).not.toContain("01712345678");
+    > 50 |     await expect(page.getByText("Sign in to join the conversation")).toBeVisible();
+         |                                                                      ^
+      51 |   });
+      52 |
+      53 |   // The root layout streams before the page resolves, so Next.js serves not-found
+        at /Users/pylot/Downloads/self/blood-donor/tests/e2e/requests.spec.ts:50:70
+
+    Error Context: test-results/requests-request-detail-sh-2502b-t-exposing-the-phone-number-desktop/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/requests-request-detail-sh-2502b-t-exposing-the-phone-number-desktop/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/requests-request-detail-sh-2502b-t-exposing-the-phone-number-desktop/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[15/26] [desktop] › tests/e2e/requests.spec.ts:55:7 › request detail › unknown and pending requests are not shown to the public
+  8) [desktop] › tests/e2e/requests.spec.ts:55:7 › request detail › unknown and pending requests are not shown to the public 
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByRole('heading', { level: 1 })
+    Expected pattern: /not found|couldn't find/i
+    Received string:  "অনুরোধটি পাওয়া যায়নি"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toContainText" getByRole('heading', { level: 1 }) with timeout 5000ms
+      - waiting for getByRole('heading', { level: 1 })
+        14 × locator resolved to <h1 class="text-2xl font-semibold tracking-tight sm:text-3xl">অনুরোধটি পাওয়া যায়নি</h1>
+           - unexpected value "অনুরোধটি পাওয়া যায়নি"
+
+
+      55 |   test("unknown and pending requests are not shown to the public", async ({ page }) => {
+      56 |     await page.goto("/requests/64c0000000000000000000ff");
+    > 57 |     await expect(page.getByRole("heading", { level: 1 })).toContainText(/not found|couldn't find/i);
+         |                                                           ^
+      58 |     await expect(page.locator('meta[name="robots"][content*="noindex"]').first()).toBeAttached();
+      59 |
+      60 |     await page.goto(`/requests/${IDS.requestPending.toHexString()}`);
+        at /Users/pylot/Downloads/self/blood-donor/tests/e2e/requests.spec.ts:57:59
+
+    Error Context: test-results/requests-request-detail-un-6c2d5-are-not-shown-to-the-public-desktop/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/requests-request-detail-un-6c2d5-are-not-shown-to-the-public-desktop/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/requests-request-detail-un-6c2d5-are-not-shown-to-the-public-desktop/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[16/26] [desktop] › tests/e2e/y-flows.spec.ts:10:7 › signed-in flows › donor registration
+  9) [desktop] › tests/e2e/y-flows.spec.ts:10:7 › signed-in flows › donor registration ─────────────
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByLabel('Full name')
+
+
+      11 |     await signIn(IDS.newcomer);
+      12 |     await page.goto("/become-donor");
+    > 13 |     await page.getByLabel("Full name").fill("Nadia Islam");
+         |                                        ^
+      14 |     await page.getByLabel("A+", { exact: true }).check({ force: true });
+      15 |     await page.getByRole("combobox", { name: "District" }).fill("Sylhet");
+      16 |     await page.keyboard.press("Enter");
+        at /Users/pylot/Downloads/self/blood-donor/tests/e2e/y-flows.spec.ts:13:40
+
+    Error Context: test-results/y-flows-signed-in-flows-donor-registration-desktop/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/y-flows-signed-in-flows-donor-registration-desktop/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/y-flows-signed-in-flows-donor-registration-desktop/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[17/26] [desktop] › tests/e2e/y-flows.spec.ts:24:7 › signed-in flows › patient posts a blood request for review
+  10) [desktop] › tests/e2e/y-flows.spec.ts:24:7 › signed-in flows › patient posts a blood request for review 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByLabel('Hospital / institute name')
+
+
+      26 |     await page.goto("/request/new");
+      27 |     await page.locator("label").filter({ hasText: /^O\+$/ }).click();
+    > 28 |     await page.getByLabel("Hospital / institute name").fill("Khulna Medical College Hospital");
+         |                                                        ^
+      29 |     await page.getByRole("combobox", { name: "District" }).fill("Khulna");
+      30 |     await page.keyboard.press("Enter");
+      31 |     await page.getByLabel("Required date").fill(isoDate(2));
+        at /Users/pylot/Downloads/self/blood-donor/tests/e2e/y-flows.spec.ts:28:56
+
+    Error Context: test-results/y-flows-signed-in-flows-pa-99294--a-blood-request-for-review-desktop/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/y-flows-signed-in-flows-pa-99294--a-blood-request-for-review-desktop/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/y-flows-signed-in-flows-pa-99294--a-blood-request-for-review-desktop/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[18/26] [desktop] › tests/e2e/y-flows.spec.ts:43:7 › signed-in flows › validation errors are shown inline
+  11) [desktop] › tests/e2e/y-flows.spec.ts:43:7 › signed-in flows › validation errors are shown inline 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('button', { name: 'Submit request' })
+
+
+      44 |     await signIn(IDS.patient);
+      45 |     await page.goto("/request/new");
+    > 46 |     await page.getByRole("button", { name: "Submit request" }).click();
+         |                                                                ^
+      47 |     await expect(page.getByText("Select a blood group")).toBeVisible();
+      48 |     await expect(page.getByText("Enter the hospital or institute name")).toBeVisible();
+      49 |   });
+        at /Users/pylot/Downloads/self/blood-donor/tests/e2e/y-flows.spec.ts:46:64
+
+    Error Context: test-results/y-flows-signed-in-flows-validation-errors-are-shown-inline-desktop/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/y-flows-signed-in-flows-validation-errors-are-shown-inline-desktop/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/y-flows-signed-in-flows-validation-errors-are-shown-inline-desktop/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[19/26] [desktop] › tests/e2e/y-flows.spec.ts:51:7 › signed-in flows › donor comments, replies and reveals the contact number
+  12) [desktop] › tests/e2e/y-flows.spec.ts:51:7 › signed-in flows › donor comments, replies and reveals the contact number 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.fill: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByLabel('Write a comment')
+
+
+      53 |     await page.goto(dhaka);
+      54 |
+    > 55 |     await page.getByLabel("Write a comment").fill("I am B+ and can come to the hospital this evening.");
+         |                                              ^
+      56 |     await page.getByRole("button", { name: "Post comment" }).click();
+      57 |     await expect(page.getByText("I am B+ and can come to the hospital this evening.")).toBeVisible();
+      58 |
+        at /Users/pylot/Downloads/self/blood-donor/tests/e2e/y-flows.spec.ts:55:46
+
+    Error Context: test-results/y-flows-signed-in-flows-do-44dcd--reveals-the-contact-number-desktop/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/y-flows-signed-in-flows-do-44dcd--reveals-the-contact-number-desktop/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/y-flows-signed-in-flows-do-44dcd--reveals-the-contact-number-desktop/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[20/26] [desktop] › tests/e2e/y-flows.spec.ts:71:7 › signed-in flows › guests cannot reach the account page
+  13) [desktop] › tests/e2e/y-flows.spec.ts:71:7 › signed-in flows › guests cannot reach the account page 
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected pattern: /\/login\?callbackUrl=%2Faccount/
+    Received string:  "http://localhost:3100/bn/login?callbackUrl=%2Fbn%2Faccount"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toHaveURL" with timeout 5000ms
+        14 × locator resolved to <html lang="bn" class="_4LtYgq_variable IjU4Qq_variable h-full antialiased">…</html>
+           - unexpected value "http://localhost:3100/bn/login?callbackUrl=%2Fbn%2Faccount"
+
+
+      71 |   test("guests cannot reach the account page", async ({ page }) => {
+      72 |     await page.goto("/account");
+    > 73 |     await expect(page).toHaveURL(/\/login\?callbackUrl=%2Faccount/);
+         |                        ^
+      74 |   });
+      75 | });
+      76 |
+        at /Users/pylot/Downloads/self/blood-donor/tests/e2e/y-flows.spec.ts:73:24
+
+    Error Context: test-results/y-flows-signed-in-flows-guests-cannot-reach-the-account-page-desktop/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/y-flows-signed-in-flows-guests-cannot-reach-the-account-page-desktop/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/y-flows-signed-in-flows-guests-cannot-reach-the-account-page-desktop/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[21/26] [desktop] › tests/e2e/zz-moderation.spec.ts:5:7 › moderation › non-admins see not-found
+  14) [desktop] › tests/e2e/zz-moderation.spec.ts:5:7 › moderation › non-admins see not-found ──────
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByRole('heading', { level: 1 })
+    Expected pattern: /couldn't find/i
+    Received string:  "পাতাটি খুঁজে পাওয়া যায়নি"
+    Timeout: 5000ms
+
+    Call log:
+      - Expect "toContainText" getByRole('heading', { level: 1 }) with timeout 5000ms
+      - waiting for getByRole('heading', { level: 1 })
+        14 × locator resolved to <h1 class="max-w-xl text-3xl font-semibold tracking-tight text-balance sm:text-4xl">পাতাটি খুঁজে পাওয়া যায়নি</h1>
+           - unexpected value "পাতাটি খুঁজে পাওয়া যায়নি"
+
+
+       6 |     await signIn(IDS.donor);
+       7 |     await page.goto("/admin/requests");
+    >  8 |     await expect(page.getByRole("heading", { level: 1 })).toContainText(/couldn't find/i);
+         |                                                           ^
+       9 |     await expect(page.getByRole("button", { name: "Approve" })).toHaveCount(0);
+      10 |   });
+      11 |
+        at /Users/pylot/Downloads/self/blood-donor/tests/e2e/zz-moderation.spec.ts:8:59
+
+    Error Context: test-results/zz-moderation-moderation-non-admins-see-not-found-desktop/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/zz-moderation-moderation-non-admins-see-not-found-desktop/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/zz-moderation-moderation-non-admins-see-not-found-desktop/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[22/26] [desktop] › tests/e2e/zz-moderation.spec.ts:12:7 › moderation › admin approves a pending request and it goes live
+  15) [desktop] › tests/e2e/zz-moderation.spec.ts:12:7 › moderation › admin approves a pending request and it goes live 
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('article').filter({ hasText: 'Sylhet MAG Osmani Medical College' }).getByRole('button', { name: 'Approve' })
+
+
+      14 |     await page.goto("/admin/requests");
+      15 |     const card = page.getByRole("article").filter({ hasText: "Sylhet MAG Osmani Medical College" });
+    > 16 |     await card.getByRole("button", { name: "Approve" }).click();
+         |                                                         ^
+      17 |     await expect(page.getByText(/Published/).first()).toBeVisible();
+      18 |
+      19 |     const response = await page.goto(`/requests/${IDS.requestPending.toHexString()}`);
+        at /Users/pylot/Downloads/self/blood-donor/tests/e2e/zz-moderation.spec.ts:16:57
+
+    Error Context: test-results/zz-moderation-moderation-a-17ab9-ng-request-and-it-goes-live-desktop/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/zz-moderation-moderation-a-17ab9-ng-request-and-it-goes-live-desktop/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/zz-moderation-moderation-a-17ab9-ng-request-and-it-goes-live-desktop/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[23/26] [mobile] › tests/e2e/mobile.spec.ts:6:7 › mobile › menu opens, navigates and closes
+  16) [mobile] › tests/e2e/mobile.spec.ts:6:7 › mobile › menu opens, navigates and closes ──────────
+
+    Error: expect(locator).toHaveAttribute(expected) failed
+
+    Locator: getByRole('button', { name: 'Open menu' })
+    Expected: "false"
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toHaveAttribute" getByRole('button', { name: 'Open menu' }) with timeout 5000ms
+      - waiting for getByRole('button', { name: 'Open menu' })
+
+
+       7 |     await page.goto("/");
+       8 |     const toggle = page.getByRole("button", { name: "Open menu" });
+    >  9 |     await expect(toggle).toHaveAttribute("aria-expanded", "false");
+         |                          ^
+      10 |     await toggle.click();
+      11 |     const menu = page.getByRole("navigation", { name: "Mobile" });
+      12 |     await expect(menu).toBeVisible();
+        at /Users/pylot/Downloads/self/blood-donor/tests/e2e/mobile.spec.ts:9:26
+
+    Error Context: test-results/mobile-mobile-menu-opens-navigates-and-closes-mobile/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/mobile-mobile-menu-opens-navigates-and-closes-mobile/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/mobile-mobile-menu-opens-navigates-and-closes-mobile/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[24/26] [mobile] › tests/e2e/mobile.spec.ts:18:7 › mobile › menu closes with Escape

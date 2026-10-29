@@ -3,7 +3,6 @@
 
 export const en = {
   pageTitle: "Moderation",
-  pageDescription: "Review new requests, handle reports and check that notifications are being delivered.",
   dismissMessage: "Dismiss message",
   tabs: {
     label: "Moderation views",
@@ -93,8 +92,6 @@ export const en = {
 
 export const bn: typeof en = {
   pageTitle: "মডারেশন",
-  pageDescription:
-    "নতুন অনুরোধ যাচাই করুন, রিপোর্ট দেখুন এবং নোটিফিকেশন ঠিকভাবে পৌঁছাচ্ছে কি না তা পরীক্ষা করুন।",
   dismissMessage: "বার্তা বন্ধ করুন",
   tabs: {
     label: "মডারেশন তালিকা",

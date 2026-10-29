@@ -18,7 +18,7 @@ test.describe("request listing", () => {
     await expect(page.getByText("Dhaka Medical College Hospital")).toHaveCount(0);
 
     await page
-      .getByRole("button", { name: /Clear filters/ })
+      .getByRole("link", { name: /Clear filters/ })
       .first()
       .click();
     await expect(page).toHaveURL(/\/requests$/);

@@ -48,7 +48,7 @@ export function MobileMenu({ children }: { children: ReactNode }) {
       <div
         id="mobile-menu"
         hidden={!open}
-        className="absolute inset-x-0 top-full border-b border-outline bg-background/98 shadow-popover"
+        className="absolute inset-x-0 top-full border-b border-outline bg-background shadow-popover"
       >
         <nav
           aria-label={t.nav.mobileNav}

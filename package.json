@@ -13,10 +13,12 @@
     "test:integration": "vitest run --project integration",
     "test:e2e": "playwright test",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "seed:dev": "node --env-file=.env.local scripts/seed-dev.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^6.0.2",
+    "@radix-ui/react-select": "^2.4.1",
     "aws4fetch": "^1.0.20",
     "lucide-react": "^1.63.0",
     "mongodb": "^7.7.0",

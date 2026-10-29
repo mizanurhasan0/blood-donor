@@ -1,16 +1,16 @@
 "use client";
 
-import { Search, SlidersHorizontal, X } from "lucide-react";
+import { Search, SlidersHorizontal } from "lucide-react";
 import { useEffect, useEffectEvent, useId, useMemo, useState, type ReactNode } from "react";
 import { BloodDropShape } from "@/components/layout/logo";
 import { Combobox } from "@/components/ui/combobox";
-import { Field, Input, Select } from "@/components/ui/field";
+import { Field, Input } from "@/components/ui/field";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Spinner } from "@/components/ui/spinner";
+import { SelectMenu } from "@/components/ui/select-menu";
 import { useDebounce } from "@/hooks/use-debounce";
 import { BLOOD_GROUPS } from "@/lib/constants/blood-groups";
 import { DISTRICTS } from "@/lib/constants/locations";
-import { formatNumber, interpolate } from "@/lib/i18n/format";
+import { formatNumber } from "@/lib/i18n/format";
 import { useLocale, useT } from "@/lib/i18n/locale-context";
 import { cn } from "@/lib/utils/cn";
 import { useRequestFilters } from "../hooks/use-request-filters";
@@ -27,10 +27,9 @@ export function BloodRequestFilters({ action }: { action?: ReactNode }) {
   const t = useT();
   const { lang } = useLocale();
   const f = t.requests.filters;
-  const { filters, activeCount, hasFilters, isPending, setFilter, clear } = useRequestFilters();
+  const { filters, activeCount, isPending, setFilter } = useRequestFilters();
   const [open, setOpen] = useState(false);
   const panelId = useId();
-  const applied = activeCount + (filters.q ? 1 : 0);
   const districtOptions = useMemo(
     () =>
       DISTRICTS.map((d) => ({
@@ -82,38 +81,41 @@ export function BloodRequestFilters({ action }: { action?: ReactNode }) {
             />
           </Field>
           <Field id="filter-urgency" label={f.urgency}>
-            <Select
+            <SelectMenu
               id="filter-urgency"
               value={filters.urgency ?? ""}
-              onChange={(e) => setFilter("urgency", e.target.value)}
-            >
-              <option value="">{f.anyUrgency}</option>
-              <option value="urgent">{t.requests.urgency.urgent}</option>
-              <option value="normal">{t.requests.urgency.normal}</option>
-            </Select>
+              onValueChange={(value) => setFilter("urgency", value)}
+              options={[
+                { value: "", label: f.anyUrgency },
+                { value: "urgent", label: t.requests.urgency.urgent },
+                { value: "normal", label: t.requests.urgency.normal },
+              ]}
+            />
           </Field>
           <Field id="filter-status" label={f.status}>
-            <Select
+            <SelectMenu
               id="filter-status"
               value={filters.status}
-              onChange={(e) => setFilter("status", e.target.value)}
-            >
-              <option value="published">{t.requests.status.published}</option>
-              <option value="fulfilled">{t.requests.status.fulfilled}</option>
-              <option value="expired">{t.requests.status.expired}</option>
-            </Select>
+              onValueChange={(value) => setFilter("status", value)}
+              options={[
+                { value: "published", label: t.requests.status.published },
+                { value: "fulfilled", label: t.requests.status.fulfilled },
+                { value: "expired", label: t.requests.status.expired },
+              ]}
+            />
           </Field>
           <Field id="filter-needed" label={t.requests.neededBy}>
-            <Select
+            <SelectMenu
               id="filter-needed"
               value={filters.needed ?? ""}
-              onChange={(e) => setFilter("needed", e.target.value)}
-            >
-              <option value="">{f.anyDate}</option>
-              <option value="today">{t.requests.today}</option>
-              <option value="3d">{f.nextThreeDays}</option>
-              <option value="7d">{f.nextSevenDays}</option>
-            </Select>
+              onValueChange={(value) => setFilter("needed", value)}
+              options={[
+                { value: "", label: f.anyDate },
+                { value: "today", label: t.requests.today },
+                { value: "3d", label: f.nextThreeDays },
+                { value: "7d", label: f.nextSevenDays },
+              ]}
+            />
           </Field>
         </div>
       </div>
@@ -121,28 +123,6 @@ export function BloodRequestFilters({ action }: { action?: ReactNode }) {
       <p aria-live="polite" className="sr-only">
         {isPending ? f.updatingResults : ""}
       </p>
-      {(hasFilters || isPending) && (
-        <div className="mt-4 flex min-h-11 items-center justify-between gap-3 border-t border-outline/60 pt-3">
-          <span className="flex items-center gap-2 text-sm text-muted">
-            {isPending && <Spinner className="size-4 text-brand-bright" />}
-            {isPending
-              ? f.updating
-              : interpolate(applied === 1 ? f.filterAppliedOne : f.filterAppliedOther, {
-                  count: formatNumber(applied, lang),
-                })}
-          </span>
-          {hasFilters && (
-            <button
-              type="button"
-              onClick={clear}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-pill px-3 text-sm font-medium text-muted transition-colors hover:bg-surface hover:text-foreground"
-            >
-              <X className="size-4" aria-hidden="true" />
-              {f.clear}
-            </button>
-          )}
-        </div>
-      )}
     </section>
   );
 }

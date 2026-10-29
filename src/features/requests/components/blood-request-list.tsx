@@ -1,9 +1,11 @@
 import { connection } from "next/server";
 import { unstable_rethrow } from "next/navigation";
 import { Fragment, Suspense, type ReactNode } from "react";
+import { X } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { EmptyState, ErrorState } from "@/components/ui/states";
-import { formatNumber } from "@/lib/i18n/format";
+import { formatNumber, interpolate } from "@/lib/i18n/format";
+import { LocalizedLink } from "@/lib/i18n/localized-link";
 import { getDictionary, getLocale } from "@/lib/i18n/server";
 import { LIMITS } from "@/lib/constants/site";
 import { parseRequestFilters, type RequestFilters } from "@/lib/validators/request";
@@ -81,6 +83,7 @@ async function BloodRequestList({ filters }: { filters: RequestFilters }) {
   }
 
   const { items, total, page, pageCount } = result;
+  const applied = Object.values(filterParams(filters)).filter(Boolean).length;
   if (items.length === 0) return <NoResults filters={filters} />;
 
   const from = (page - 1) * LIMITS.requestsPerPage + 1;
@@ -95,16 +98,37 @@ async function BloodRequestList({ filters }: { filters: RequestFilters }) {
       <h2 id="results-heading" className="sr-only">
         {t.requests.list.resultsHeading}
       </h2>
-      <p role="status" className="text-sm text-muted">
-        {fillNodes(resultsTemplate, {
-          range: (
-            <span className="font-medium text-foreground">
-              {formatNumber(from, lang)}–{formatNumber(to, lang)}
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <p role="status" className="text-sm text-muted">
+          {fillNodes(resultsTemplate, {
+            range: (
+              <span className="font-medium text-foreground">
+                {formatNumber(from, lang)}–{formatNumber(to, lang)}
+              </span>
+            ),
+            total: <span className="font-medium text-foreground">{formatNumber(total, lang)}</span>,
+          })}
+        </p>
+        {applied > 0 && (
+          <div className="flex items-center gap-3 text-sm">
+            <span className="text-muted">
+              {interpolate(
+                applied === 1 ? t.requests.filters.filterAppliedOne : t.requests.filters.filterAppliedOther,
+                {
+                  count: formatNumber(applied, lang),
+                },
+              )}
             </span>
-          ),
-          total: <span className="font-medium text-foreground">{formatNumber(total, lang)}</span>,
-        })}
-      </p>
+            <LocalizedLink
+              href="/requests"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-pill px-3 font-medium text-muted transition-colors hover:bg-surface hover:text-foreground"
+            >
+              <X className="size-4" aria-hidden="true" />
+              {t.requests.filters.clear}
+            </LocalizedLink>
+          </div>
+        )}
+      </div>
       <RequestGrid>
         {items.map((request) => (
           <BloodRequestCard key={request.id} request={request} />

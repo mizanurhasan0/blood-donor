@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { PageContainer } from "@/components/ui/container";
+import { Container } from "@/components/ui/container";
 import { requireViewerOrRedirect } from "@/features/auth/viewer";
 import { ModerationFeedbackProvider } from "@/features/moderation/components/moderation-feedback";
 import { ModerationQueue, ModerationQueueSkeleton } from "@/features/moderation/components/moderation-queue";
@@ -40,7 +40,9 @@ export default async function ModerationPage({
   const t = await getDictionary();
 
   return (
-    <PageContainer title={t.moderation.pageTitle} description={t.moderation.pageDescription}>
+    <Container className="py-6 sm:py-10">
+      {/* Visually hidden: keeps one level-1 heading for screen readers and search engines. */}
+      <h1 className="sr-only">{t.moderation.pageTitle}</h1>
       <ModerationFeedbackProvider text={t.moderation}>
         <div className="flex flex-col gap-8">
           <Suspense fallback={<NotificationSummarySkeleton />}>
@@ -57,6 +59,6 @@ export default async function ModerationPage({
           )}
         </div>
       </ModerationFeedbackProvider>
-    </PageContainer>
+    </Container>
   );
 }

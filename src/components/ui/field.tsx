@@ -1,6 +1,5 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
 import type { ComponentProps, ReactNode } from "react";
 import { useT } from "@/lib/i18n/locale-context";
 import { cn } from "@/lib/utils/cn";
@@ -53,20 +52,6 @@ export function Input({ className, ...props }: ComponentProps<"input">) {
 
 export function Textarea({ className, ...props }: ComponentProps<"textarea">) {
   return <textarea className={cn(controlClasses, "min-h-28 resize-y", className)} {...props} />;
-}
-
-export function Select({ className, children, ...props }: ComponentProps<"select">) {
-  return (
-    <div className={cn("relative", className)}>
-      <select className={cn(controlClasses, "appearance-none pr-10")} {...props}>
-        {children}
-      </select>
-      <ChevronDown
-        aria-hidden="true"
-        className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted"
-      />
-    </div>
-  );
 }
 
 export function Checkbox({

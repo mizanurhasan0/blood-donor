@@ -1,4 +1,4 @@
-import { Menu, Shield } from "lucide-react";
+import { Menu } from "lucide-react";
 import { unstable_rethrow } from "next/navigation";
 import { Suspense } from "react";
 import { Avatar } from "@/components/ui/avatar";
@@ -15,6 +15,7 @@ import { LanguageSwitcher } from "./language-switcher";
 import { Logo } from "./logo";
 import { MobileMenu } from "./mobile-menu";
 import { NavLinks, NavList } from "./nav-links";
+import { ProfileMenu, type ProfileRole } from "./profile-menu";
 
 type Nav = Dictionary["nav"];
 
@@ -47,39 +48,51 @@ function GuestButtons({ stacked = false, t }: { stacked?: boolean; t: Nav }) {
   );
 }
 
+/** Admin wins over donor: an admin who is also a donor is shown as admin. */
+function roleOf(viewer: Viewer): ProfileRole {
+  if (viewer.isAdmin) return "admin";
+  return viewer.donor ? "donor" : "member";
+}
+
+function roleLabel(role: ProfileRole, t: Nav): string {
+  return role === "admin" ? t.roleAdmin : role === "donor" ? t.roleDonor : t.roleMember;
+}
+
+function displayName(viewer: Viewer): string {
+  return viewer.donor?.fullName ?? viewer.name;
+}
+
+/** Guests see the language switch beside the sign-in buttons. Signed-in users find it in the profile menu. */
+function GuestAccount({ t }: { t: Nav }) {
+  return (
+    <>
+      <LanguageSwitcher />
+      <GuestButtons t={t} />
+    </>
+  );
+}
+
 async function DesktopAccount({ t }: { t: Nav }) {
   const viewer = await safeViewer();
-  if (!viewer) return <GuestButtons t={t} />;
-  return (
-    <div className="flex items-center gap-2">
-      {viewer.isAdmin && (
-        <ButtonLink href="/admin/requests" variant="ghost" size="sm">
-          <Shield className="size-4" aria-hidden="true" />
-          {t.admin}
-        </ButtonLink>
-      )}
-      <LocalizedLink
-        href="/account"
-        className="flex min-h-11 items-center gap-2.5 rounded-pill border border-outline py-1 pr-4 pl-1 text-sm font-medium transition-colors hover:border-muted"
-      >
-        <Avatar name={viewer.name} src={viewer.avatar} size={34} />
-        <span className="max-w-32 truncate">{viewer.name.split(" ")[0]}</span>
-      </LocalizedLink>
-    </div>
-  );
+  if (!viewer) return <GuestAccount t={t} />;
+  return <ProfileMenu name={displayName(viewer)} avatar={viewer.avatar ?? null} role={roleOf(viewer)} />;
 }
 
 async function MobileAccount({ t, lang }: { t: Nav; lang: Locale }) {
   const viewer = await safeViewer();
   if (!viewer) return <GuestButtons stacked t={t} />;
+  const role = roleOf(viewer);
   return (
     <div className="flex flex-col gap-2">
       <LocalizedLink
         href="/account"
         className="flex min-h-12 items-center gap-3 rounded-button px-4 hover:bg-surface"
       >
-        <Avatar name={viewer.name} src={viewer.avatar} size={32} />
-        <span className="font-medium">{t.account}</span>
+        <Avatar name={displayName(viewer)} src={viewer.avatar} size={32} />
+        <span className="flex min-w-0 flex-col">
+          <span className="truncate font-medium">{displayName(viewer)}</span>
+          <span className="text-xs text-muted">{roleLabel(role, t)}</span>
+        </span>
       </LocalizedLink>
       {viewer.isAdmin && (
         <LocalizedLink
@@ -122,8 +135,7 @@ export async function Header() {
           </Suspense>
         </nav>
         <div className="hidden items-center gap-3 lg:flex">
-          <LanguageSwitcher />
-          <Suspense fallback={<GuestButtons t={t.nav} />}>
+          <Suspense fallback={<GuestAccount t={t.nav} />}>
             <DesktopAccount t={t.nav} />
           </Suspense>
         </div>
