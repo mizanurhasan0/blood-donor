@@ -143,6 +143,11 @@ html:lang(bn) .uppercase {
   text-transform: none;
 }
 
+@keyframes request-chevron-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

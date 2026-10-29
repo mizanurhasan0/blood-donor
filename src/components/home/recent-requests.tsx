@@ -61,7 +61,7 @@ export async function RecentRequests() {
     );
   }
   return (
-    <RequestGrid>
+    <RequestGrid columns={2}>
       {requests.map((request) => (
         <BloodRequestCard key={request.id} request={request} />
       ))}
@@ -71,7 +71,7 @@ export async function RecentRequests() {
 
 export function RecentRequestsSkeleton() {
   return (
-    <RequestGrid>
+    <RequestGrid columns={2}>
       {Array.from({ length: 4 }, (_, i) => (
         <BloodRequestCardSkeleton key={i} />
       ))}

@@ -1,9 +1,15 @@
 import { cn } from "@/lib/utils/cn";
+import { getDictionary } from "@/lib/i18n/server";
 import { BANGLADESH_DISTRICTS } from "./bangladesh-district-data";
 import { BANGLADESH_MAP_SIZE } from "./bangladesh-map-constants";
 import { BangladeshDistricts } from "./bangladesh-districts";
 
-export function BangladeshVisual({ className }: { className?: string }) {
+export async function BangladeshVisual({ className }: { className?: string }) {
+  const { geo, home } = await getDictionary();
+  const districts = BANGLADESH_DISTRICTS.map((district) => ({
+    ...district,
+    label: geo.districts[district.name as keyof typeof geo.districts] ?? district.name,
+  }));
   const countryOutline = BANGLADESH_DISTRICTS.map((district) => district.path).join("");
 
   return (
@@ -24,7 +30,11 @@ export function BangladeshVisual({ className }: { className?: string }) {
           strokeLinejoin="round"
         />
       </svg>
-      <BangladeshDistricts districts={BANGLADESH_DISTRICTS} />
+      <BangladeshDistricts
+        districts={districts}
+        mapLabel={home.mapLabel}
+        highlightedLabel={home.mapDistrictHighlighted}
+      />
     </div>
   );
 }

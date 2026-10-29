@@ -2,19 +2,18 @@
 
 import { useId, useState, type KeyboardEvent } from "react";
 import { BANGLADESH_MAP_SIZE } from "./bangladesh-map-constants";
+import { useDistrictRotation } from "./use-district-rotation";
 
-type DistrictShape = { name: string; path: string; center: readonly [number, number] };
+type DistrictShape = { name: string; label: string; path: string; center: readonly [number, number] };
 
 function DistrictShapePath({
   district,
   patternId,
   onActivate,
-  onDeactivate,
 }: {
   district: DistrictShape;
   patternId: string;
-  onActivate: (district: DistrictShape) => void;
-  onDeactivate: () => void;
+  onActivate: () => void;
 }) {
   return (
     <g>
@@ -28,8 +27,7 @@ function DistrictShapePath({
         strokeWidth="0.85"
         strokeLinejoin="round"
         vectorEffect="non-scaling-stroke"
-        onPointerEnter={() => onActivate(district)}
-        onPointerLeave={onDeactivate}
+        onPointerEnter={onActivate}
       />
     </g>
   );
@@ -47,18 +45,30 @@ function DistrictTooltip({ district }: { district: DistrictShape }) {
       }}
       aria-hidden="true"
     >
-      {district.name}
+      {district.label}
     </div>
   );
 }
 
-export function BangladeshDistricts({ districts }: { districts: DistrictShape[] }) {
-  const [activeDistrict, setActiveDistrict] = useState<DistrictShape | null>(null);
+export function BangladeshDistricts({
+  districts,
+  mapLabel,
+  highlightedLabel,
+}: {
+  districts: DistrictShape[];
+  mapLabel: string;
+  highlightedLabel: string;
+}) {
+  const [pointerInside, setPointerInside] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const paused = pointerInside || focused;
+  const [activeIndex, setActiveIndex] = useDistrictRotation(districts.length, paused);
+  const activeDistrict = activeIndex === null ? null : districts[activeIndex];
   const patternId = `bangladesh-dots-${useId().replaceAll(":", "")}`;
 
   function handleKeyDown(event: KeyboardEvent<SVGSVGElement>) {
     if (event.key === "Escape") {
-      setActiveDistrict(null);
+      setActiveIndex(null);
       return;
     }
 
@@ -66,39 +76,44 @@ export function BangladeshDistricts({ districts }: { districts: DistrictShape[] 
     if (!event.key.startsWith("Arrow")) return;
 
     event.preventDefault();
-    const currentIndex = districts.findIndex((district) => district.name === activeDistrict?.name);
+    const currentIndex = activeIndex ?? -1;
     const nextIndex =
       currentIndex < 0
         ? step === 1
           ? 0
           : districts.length - 1
         : (currentIndex + step + districts.length) % districts.length;
-    setActiveDistrict(districts[nextIndex] ?? null);
+    setActiveIndex(districts.length ? nextIndex : null);
   }
 
   return (
-    <div className="relative size-full">
+    <div
+      className="relative size-full"
+      onPointerEnter={() => setPointerInside(true)}
+      onPointerLeave={() => setPointerInside(false)}
+      onPointerCancel={() => setPointerInside(false)}
+    >
       <svg
         viewBox={`0 0 ${BANGLADESH_MAP_SIZE.width} ${BANGLADESH_MAP_SIZE.height}`}
         className="relative size-full overflow-visible"
         role="group"
-        aria-label="Bangladesh districts map. Use the arrow keys to explore districts."
+        aria-label={mapLabel}
         tabIndex={0}
         onKeyDown={handleKeyDown}
-        onBlur={() => setActiveDistrict(null)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
       >
         <defs>
           <pattern id={patternId} width="7" height="7" patternUnits="userSpaceOnUse">
             <circle cx="1.5" cy="1.5" r="1" className="fill-outline" />
           </pattern>
         </defs>
-        {districts.map((district) => (
+        {districts.map((district, index) => (
           <DistrictShapePath
             key={district.name}
             district={district}
             patternId={patternId}
-            onActivate={setActiveDistrict}
-            onDeactivate={() => setActiveDistrict(null)}
+            onActivate={() => setActiveIndex(index)}
           />
         ))}
         {activeDistrict && (
@@ -114,7 +129,7 @@ export function BangladeshDistricts({ districts }: { districts: DistrictShape[] 
       </svg>
       {activeDistrict && <DistrictTooltip district={activeDistrict} />}
       <span className="sr-only" aria-live="polite" aria-atomic="true">
-        {activeDistrict ? `${activeDistrict.name} district highlighted.` : ""}
+        {focused && activeDistrict ? highlightedLabel.replace("{district}", activeDistrict.label) : ""}
       </span>
     </div>
   );

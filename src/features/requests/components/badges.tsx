@@ -41,16 +41,28 @@ const STATUS_TONE: Record<RequestStatus, BadgeTone> = {
   rejected: "brand",
 };
 
-export async function RequestStatusBadge({ status }: { status: RequestStatus }) {
+export async function RequestStatusBadge({
+  status,
+  className,
+}: {
+  status: RequestStatus;
+  className?: string;
+}) {
   const t = await getDictionary();
-  return <Badge tone={STATUS_TONE[status]}>{t.requests.status[status]}</Badge>;
+  return <Badge tone={STATUS_TONE[status]} className={className}>{t.requests.status[status]}</Badge>;
 }
 
-export async function UrgencyBadge({ urgency }: { urgency: Urgency }) {
+export async function UrgencyBadge({
+  urgency,
+  className,
+}: {
+  urgency: Urgency;
+  className?: string;
+}) {
   const t = await getDictionary();
   return urgency === "urgent" ? (
-    <Badge tone="solid">{t.requests.urgency.urgent}</Badge>
+    <Badge tone="solid" className={className}>{t.requests.urgency.urgent}</Badge>
   ) : (
-    <Badge tone="neutral">{t.requests.urgency.normal}</Badge>
+    <Badge tone="neutral" className={className}>{t.requests.urgency.normal}</Badge>
   );
 }

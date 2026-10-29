@@ -26,10 +26,10 @@ export function DistrictMap({ district, className }: { district: District; class
         <>
           <path
             d={selected.path}
-            fill="#ff2442"
-            fillOpacity="0.48"
-            stroke="#ff5a6e"
-            strokeWidth="1.5"
+            fill="#7dd3fc"
+            fillOpacity="0.82"
+            stroke="#38bdf8"
+            strokeWidth="1.2"
             strokeLinejoin="round"
           />
           <circle cx={selected.center[0]} cy={selected.center[1]} r="7" fill="#ff2442" fillOpacity="0.25" />
