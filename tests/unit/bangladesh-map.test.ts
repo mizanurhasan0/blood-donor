@@ -49,3 +49,4 @@ describe("Bangladesh map geometry", () => {
     expect(width / height).toBeLessThan(0.8);
   });
 });
+
